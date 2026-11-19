@@ -1568,8 +1568,13 @@
         }
       }
 
+      let pendingLockedRegen = false;
+
       async function generate({ forceNewSeed = true } = {}) {
-        if (isGenerating) return;
+        if (isGenerating) {
+          if (!forceNewSeed) pendingLockedRegen = true;
+          return;
+        }
         if (mode === "image" && !hasImage) return;
 
         isGenerating = true;
@@ -1730,6 +1735,10 @@
           console.error(err);
         } finally {
           isGenerating = false;
+          if (pendingLockedRegen && seedLocked && (mode === "background" || hasImage)) {
+            pendingLockedRegen = false;
+            generate({ forceNewSeed: false });
+          }
         }
       }
 
@@ -2321,8 +2330,8 @@
           driftModeTabs.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === btn));
           driftMultWrap.style.opacity = driftMode === "random" ? "0.35" : "1";
           driftMultWrap.style.pointerEvents = driftMode === "random" ? "none" : "auto";
-          if (seedLocked && (mode === "background" || hasImage)) {
-            generate({ forceNewSeed: false });
+          if (mode === "background" || hasImage) {
+            generate({ forceNewSeed: !seedLocked });
           }
         };
       });
