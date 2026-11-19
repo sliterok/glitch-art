@@ -659,6 +659,12 @@
       let showingOriginal = false;
       let showFgOverlay = false;
 
+      // Backend detection: Server (Sharp) vs Client (Web Worker / Canvas)
+      let hasServerBackend = false;
+      let glitchWorker = null;
+      let workerPendingId = 0;
+      const workerCallbacks = new Map();
+
       let history = []; // newest at index 0
       let currentIndex = -1;
 
@@ -718,6 +724,58 @@
       const savePngBtn = $("savePngBtn");
       const saveJpgBtn = $("saveJpgBtn");
 
+      async function initEngine() {
+        // 1. Check if native Sharp server backend is active
+        try {
+          const res = await fetch("/api/ping", { signal: AbortSignal.timeout(1200) });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.server && data.engine === "sharp") {
+              hasServerBackend = true;
+              statusText.textContent = "Ready (⚡ Server: Sharp C++)";
+              return;
+            }
+          }
+        } catch {}
+
+        // 2. Initialize client Web Worker for high-performance off-thread generation
+        hasServerBackend = false;
+        try {
+          if (typeof Worker !== "undefined") {
+            glitchWorker = new Worker(new URL("./lib/glitchWorker.js", import.meta.url), {
+              type: "module",
+            });
+            glitchWorker.onmessage = (e) => {
+              const { id, ok, data, error } = e.data;
+              const cb = workerCallbacks.get(id);
+              if (cb) {
+                workerCallbacks.delete(id);
+                if (ok) cb.resolve(data);
+                else cb.reject(new Error(error));
+              }
+            };
+            glitchWorker.onerror = (e) => {
+              console.warn("Web Worker error, falling back to main-thread engine", e);
+              glitchWorker = null;
+            };
+            statusText.textContent = "Ready (🚀 Client: Web Worker)";
+          } else {
+            statusText.textContent = "Ready (Client Engine)";
+          }
+        } catch (e) {
+          console.warn("Worker init failed, running on main thread", e);
+          statusText.textContent = "Ready (Client Engine)";
+        }
+      }
+
+      function callWorker(type, payload) {
+        return new Promise((resolve, reject) => {
+          const id = ++workerPendingId;
+          workerCallbacks.set(id, { resolve, reject });
+          glitchWorker.postMessage({ id, type, payload });
+        });
+      }
+
       function syncUI() {
         const isBg = mode === "background";
 
@@ -773,17 +831,47 @@
 
         try {
           const q = Number(qualityEl.value);
-          const prepared = await prepareUploadedImage(file, q);
-          imageState = prepared;
 
-          if (originalUrl && originalUrl !== prepared.origJpegUrl) {
-            URL.revokeObjectURL(originalUrl);
+          if (hasServerBackend) {
+            const form = new FormData();
+            form.append("image", file);
+            form.append("quality", q);
+
+            const res = await fetch("/api/upload", { method: "POST", body: form });
+            if (!res.ok) throw new Error("Server upload failed");
+            const meta = await res.json();
+
+            if (originalUrl) URL.revokeObjectURL(originalUrl);
+            const origRes = await fetch("/api/original");
+            originalUrl = URL.createObjectURL(await origRes.blob());
+            fgOverlay.src = originalUrl;
+            hasImage = true;
+            statusText.textContent = `Loaded ${meta.width}×${meta.height} (Sharp)`;
+          } else if (glitchWorker) {
+            const prepared = await callWorker("prepareUploadedImage", {
+              fileOrBlob: file,
+              quality: q,
+            });
+            imageState = prepared;
+
+            if (originalUrl) URL.revokeObjectURL(originalUrl);
+            originalUrl = URL.createObjectURL(prepared.origBlob);
+            fgOverlay.src = originalUrl;
+            hasImage = true;
+            statusText.textContent = `Loaded ${prepared.width}×${prepared.height} (palette ready)`;
+          } else {
+            const prepared = await prepareUploadedImage(file, q);
+            imageState = prepared;
+
+            if (originalUrl && originalUrl !== prepared.origJpegUrl) {
+              URL.revokeObjectURL(originalUrl);
+            }
+            originalUrl = prepared.origJpegUrl;
+            fgOverlay.src = originalUrl;
+            hasImage = true;
+            statusText.textContent = `Loaded ${prepared.width}×${prepared.height}`;
           }
-          originalUrl = prepared.origJpegUrl;
-          fgOverlay.src = originalUrl;
-          hasImage = true;
 
-          statusText.textContent = `Loaded ${prepared.width}×${prepared.height} (palette ready)`;
           syncUI();
           generate({ forceNewSeed: !seedLocked });
         } catch (err) {
@@ -812,41 +900,100 @@
         const quality = Math.max(30, Math.min(96, Number(qualityEl.value) || 85));
 
         try {
-          let result;
-          if (mode === "image") {
-            if (quality !== imageState.quality) {
-              const refreshed = await prepareUploadedImage(imageState.rawSource, quality);
-              refreshed.palette = imageState.palette;
-              imageState = refreshed;
+          let url, blob, diff, attempts, usedEngine;
+
+          if (hasServerBackend) {
+            const res = await fetch("/api/glitch", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                mode,
+                engine,
+                seed,
+                pattern: patternSelect.value,
+                width: bgWidth,
+                height: bgHeight,
+                intensity,
+                maxDrift,
+                quality,
+                includeDqt: includeDqtEl.checked,
+                matchImagePalette: matchPaletteEl.checked && hasImage,
+              }),
+            });
+
+            if (!res.ok) {
+              const err = await res.json().catch(() => ({}));
+              throw new Error(err.error || "Server glitch failed");
             }
-            result = await glitchUploadedImage(imageState, {
-              seed,
-              intensity,
-              maxDrift,
-              includeDqt: includeDqtEl.checked,
-            });
+
+            blob = await res.blob();
+            url = URL.createObjectURL(blob);
+            diff = res.headers.get("X-Glitch-Diff") || "?";
+            attempts = res.headers.get("X-Glitch-Attempts") || "1";
+            usedEngine = res.headers.get("X-Glitch-Engine") || engine;
+          } else if (glitchWorker) {
+            let res;
+            if (mode === "image") {
+              res = await callWorker("glitchUploadedImage", {
+                quality,
+                opts: { seed, intensity, maxDrift, includeDqt: includeDqtEl.checked },
+              });
+            } else {
+              res = await callWorker("generateGlitchBackground", {
+                opts: {
+                  engine,
+                  seed,
+                  pattern: patternSelect.value,
+                  width: bgWidth,
+                  height: bgHeight,
+                  intensity,
+                  maxDrift,
+                  quality,
+                  matchImagePalette: matchPaletteEl.checked && hasImage,
+                },
+              });
+            }
+            blob = res.blob;
+            url = URL.createObjectURL(blob);
+            diff = typeof res.diff === "number" ? res.diff.toFixed(1) : String(res.diff);
+            attempts = String(res.attempts);
+            usedEngine = res.engine;
           } else {
-            result = await generateGlitchBackground({
-              engine,
-              seed,
-              pattern: patternSelect.value,
-              width: bgWidth,
-              height: bgHeight,
-              height: Number(hStr),
-              intensity,
-              maxDrift,
-              quality,
-              imagePalette: imageState?.palette || null,
-              matchImagePalette: matchPaletteEl.checked && hasImage,
-            });
+            let result;
+            if (mode === "image") {
+              if (quality !== imageState.quality) {
+                const refreshed = await prepareUploadedImage(imageState.rawSource, quality);
+                refreshed.palette = imageState.palette;
+                imageState = refreshed;
+              }
+              result = await glitchUploadedImage(imageState, {
+                seed,
+                intensity,
+                maxDrift,
+                includeDqt: includeDqtEl.checked,
+              });
+            } else {
+              result = await generateGlitchBackground({
+                engine,
+                seed,
+                pattern: patternSelect.value,
+                width: bgWidth,
+                height: bgHeight,
+                intensity,
+                maxDrift,
+                quality,
+                imagePalette: imageState?.palette || null,
+                matchImagePalette: matchPaletteEl.checked && hasImage,
+              });
+            }
+            blob = result.blob;
+            url = result.url;
+            diff = typeof result.diff === "number" ? result.diff.toFixed(1) : String(result.diff);
+            attempts = String(result.attempts);
+            usedEngine = result.engine;
           }
 
           const ms = Math.round(performance.now() - t0);
-          const url = result.url;
-          const blob = result.blob;
-          const diff = typeof result.diff === "number" ? result.diff.toFixed(1) : String(result.diff);
-          const attempts = String(result.attempts);
-          const usedEngine = result.engine;
 
           history.unshift({
             url,
@@ -876,7 +1023,8 @@
           dropzone.style.display = "none";
           stage.style.display = "flex";
           selectHistory(0);
-          statusText.textContent = `Done in ${ms}ms`;
+          const engineTag = hasServerBackend ? "⚡ Sharp" : glitchWorker ? "🚀 Worker" : "Client";
+          statusText.textContent = `Done in ${ms}ms (${engineTag})`;
         } catch (err) {
           statusText.textContent = err.message;
           console.error(err);
@@ -1117,6 +1265,7 @@
       });
 
       syncUI();
+      initEngine();
     </script>
   </body>
 </html>

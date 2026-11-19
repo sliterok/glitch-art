@@ -64,7 +64,12 @@ No build step or native dependencies required. You can run it with any static fi
 # Using Node.js built-in dev server:
 pnpm dev
 # or
-npm start
+pnpm start
+
+# Or using Express server:
+pnpm serve
+# or
+pnpm run server
 
 # Or using npx serve:
 npx serve .

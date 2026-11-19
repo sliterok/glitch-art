@@ -8,7 +8,7 @@ import {
   generateGlitchBackground,
   glitchUploadedImage,
   prepareUploadedImage,
-} from './lib/glitchEngine.js';
+} from './lib/glitchEngineNode.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -18,16 +18,23 @@ const upload = multer({
 });
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve static frontend files from the single root source of truth
+app.use(express.static(__dirname));
+app.use('/lib', express.static(path.join(__dirname, 'lib')));
 
 let imageState = null;
+
+// Ping route so frontend detects native server mode
+app.get('/api/ping', (req, res) => {
+  res.json({ ok: true, server: true, engine: 'sharp' });
+});
 
 app.post('/api/upload', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No image uploaded' });
     const quality = Number(req.body.quality) || 85;
     const prepared = await prepareUploadedImage(req.file.buffer, quality);
-    prepared.palette = extractPaletteFromThumb(prepared.origThumb);
     imageState = prepared;
 
     res.json({
@@ -105,7 +112,27 @@ app.post('/api/glitch', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`JPEG Glitcher running at http://localhost:${PORT}`);
+// Root route serves index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+const DEFAULT_PORT = Number(process.env.PORT) || 3000;
+
+function listen(port) {
+  const server = app.listen(port, () => {
+    console.log(`\n  🚀 JPEG Glitcher & Background Lab (Native Sharp Server)`);
+    console.log(`  Local: http://localhost:${port}/\n`);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`Port ${port} in use, trying ${port + 1}...`);
+      listen(port + 1);
+    } else {
+      console.error('Server error:', err);
+    }
+  });
+}
+
+listen(DEFAULT_PORT);
