@@ -26,13 +26,19 @@ Synthesize seeded glitch backdrops from scratch without uploading an image:
 
 ### 3. Gallery, Favorites & Persistent History
 - **Persistent In-Browser History (IndexedDB)**: Generations are stored locally in your browser's IndexedDB, surviving page reloads and browser restarts.
-- **Favorites Album (❤️)**: Easily bookmark frames with the `Favorite` button or `P` hotkey. Filter your history strip between **All** and **Favorites**.
-- **iPhone-Style Multi-Select**: Tap **Select** to enter multi-select mode with round checkbox badges. Batch action bar supports **Select All**, **Download (N)**, **Delete (N)**, and **Favorite (N)**.
+- **Fullscreen Gallery Modal (G)**: Pop out the history strip into a full-screen responsive grid (`⛶ Fullscreen` or hotkey `G`, exit with `Esc`), with synchronized batch action bar and favorites filter.
+- **Desktop Range Select (Shift-Click + Hover Preview)**: Range select multiple items across the strip or grid by holding `Shift` and clicking an end item. Hovering over thumbnails while holding `Shift` provides a live dashed outline preview of the range before clicking.
+- **Marquee Box Drag Selection**: Click and drag a selection rectangle across items in either the footer strip or the fullscreen grid to effortlessly batch-select frames.
+- **Favorites Album (❤️)**: Easily bookmark frames with the `Favorite` button or `P` hotkey. Filter between **All** and **Favorites**.
+- **Batch Actions**: Multi-select mode with round checkbox badges. Batch action bar supports **Select All**, **Download (N)**, **Delete (N)**, and **Favorite (N)**.
 - **"Use as Source" Feedback Loop (U)**: One-click button to take any generated background or historic glitch frame and feed it directly into **Image Glitch** mode as the new input photo, enabling infinite recursive glitch distortion.
 - **Exponential Intensity Strategy ($e^n$)**: Intensity maps exponentially ($e^n$) rather than linearly, with the slider range automatically adapting to the image's maximum resolution (from 512px up to 2048px) so visual glitch density remains consistent across all canvas sizes.
 
 ### 4. Workflow & Controls
-- **Deterministic Seeds**: Space rolls a new seed; click **Lock** to tweak sliders (Intensity, Max Drift, Quality) on the same seed.
+- **Noise vs. Random Drift Toggle**: Choose between smooth continuous 1D Perlin wave displacement (`Noise`) or jagged pseudo-random jumps (`Random`).
+- **Noise Frequency Multiplier Slider**: Fine-tune the wave frequency and ripple scale from `0.1×` to `4.0×`.
+- **Micro-Drift Support**: Max Drift slider lowered down to `2` with adaptive candidate acceptance thresholds for delicate scanline jitter without decoder rejection.
+- **Deterministic Seeds**: Space rolls a new seed; click **Lock** to tweak sliders (Intensity, Max Drift, Noise Mult, Quality) on the same seed in real-time.
 - **Export**: One-click download as high-resolution PNG (**S**) or baseline JPEG.
 - **Keyboard Shortcuts**:
   - `Space` / Click Preview: Generate next
@@ -40,6 +46,9 @@ Synthesize seeded glitch backdrops from scratch without uploading an image:
   - Hold `O`: View original
   - `U`: Use active frame as glitch source
   - `P`: Toggle Favorite
+  - `G`: Toggle Fullscreen History Gallery
+  - `Esc`: Exit Fullscreen or cancel batch selection
+  - Hold `Shift`: Preview and range-select items
   - `F`: Toggle FG overlay
   - `S`: Save PNG
 

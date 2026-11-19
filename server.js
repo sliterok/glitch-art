@@ -63,8 +63,10 @@ app.post('/api/glitch', async (req, res) => {
         : randomSeedString();
 
     const intensity = Math.max(1, Math.min(120, Number(req.body.intensity) || 8));
-    const maxDrift = Math.max(15, Math.min(150, Number(req.body.maxDrift) || 75));
+    const maxDrift = Math.max(2, Math.min(150, Number(req.body.maxDrift) || 65));
     const quality = Math.max(30, Math.min(96, Number(req.body.quality) || 85));
+    const driftMode = req.body.driftMode === 'random' ? 'random' : 'noise';
+    const driftMultiplier = Math.max(0.1, Math.min(5.0, Number(req.body.driftMultiplier) || 1.0));
 
     let result;
 
@@ -82,6 +84,8 @@ app.post('/api/glitch', async (req, res) => {
         intensity,
         maxDrift,
         includeDqt: Boolean(req.body.includeDqt),
+        driftMode,
+        driftMultiplier,
       });
     } else {
       result = await generateGlitchBackground({
@@ -95,6 +99,8 @@ app.post('/api/glitch', async (req, res) => {
         quality,
         imagePalette: imageState?.palette || null,
         matchImagePalette: Boolean(req.body.matchImagePalette),
+        driftMode,
+        driftMultiplier,
       });
     }
 

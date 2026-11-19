@@ -450,6 +450,9 @@
         height: 100%;
         object-fit: cover;
         display: block;
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-drag: none;
       }
       .thumb .fav-badge {
         position: absolute;
@@ -499,6 +502,209 @@
         font-size: 9px;
         padding: 1px 4px;
         border-radius: 3px;
+      }
+
+      /* Hover Preview during Shift & Drag */
+      .thumb.shift-preview,
+      .grid-card.shift-preview {
+        outline: 2px dashed var(--accent) !important;
+        outline-offset: -2px;
+        filter: brightness(1.22);
+      }
+      .thumb.shift-preview .select-check,
+      .grid-card.shift-preview .select-check {
+        display: flex !important;
+        background: rgba(108, 140, 255, 0.55);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      .thumb.drag-hover,
+      .grid-card.drag-hover {
+        outline: 2px solid var(--accent) !important;
+        outline-offset: -2px;
+      }
+      .selection-marquee {
+        position: fixed;
+        border: 1.5px solid var(--accent);
+        background: rgba(108, 140, 255, 0.18);
+        pointer-events: none;
+        border-radius: 3px;
+        z-index: 2000;
+      }
+
+      /* Fullscreen History Gallery Modal */
+      .history-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        background: rgba(10, 12, 17, 0.95);
+        backdrop-filter: blur(18px);
+        animation: fadeInModal 0.15s ease-out;
+      }
+      @keyframes fadeInModal {
+        from {
+          opacity: 0;
+          transform: scale(0.99);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      .modal-header {
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        padding: 10px 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .modal-title-group h2 {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text);
+        margin: 0;
+        line-height: 1.2;
+      }
+      .modal-subtitle {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .modal-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 18px;
+        position: relative;
+      }
+      .modal-footer {
+        background: var(--panel);
+        border-top: 1px solid var(--border);
+        padding: 8px 18px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .close-btn {
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        font-size: 18px;
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.1s;
+      }
+      .close-btn:hover {
+        background: var(--panel-2);
+        color: var(--text);
+      }
+
+      .history-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 12px;
+        user-select: none;
+      }
+      .grid-card {
+        position: relative;
+        aspect-ratio: 1 / 1;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 2px solid transparent;
+        background: #090a0f;
+        cursor: pointer;
+        transition:
+          transform 0.1s,
+          border-color 0.1s,
+          box-shadow 0.1s;
+      }
+      .grid-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.5);
+      }
+      .grid-card.active {
+        border-color: var(--accent);
+      }
+      .grid-card.is-selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px var(--accent);
+      }
+      .grid-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        pointer-events: none;
+      }
+      .grid-card .fav-badge {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        font-size: 13px;
+        line-height: 1;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.8));
+        display: none;
+      }
+      .grid-card.is-favorite .fav-badge {
+        display: block;
+      }
+      .grid-card .select-check {
+        position: absolute;
+        top: 6px;
+        left: 6px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 1.5px solid rgba(255, 255, 255, 0.85);
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+      }
+      body.is-selecting .grid-card .select-check {
+        display: flex;
+      }
+      .grid-card.is-selected .select-check {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .grid-card .card-info {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 3px 6px;
+        background: linear-gradient(transparent, rgba(14, 16, 21, 0.92));
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 10px;
+        color: var(--text);
+        pointer-events: none;
+      }
+      .grid-card .card-tag {
+        background: rgba(14, 16, 21, 0.85);
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-size: 9px;
+      }
+
+      .sm-tabs {
+        padding: 1px;
+      }
+      .sm-tabs .tab {
+        padding: 3px 7px;
+        font-size: 11px;
       }
       .hints {
         display: flex;
@@ -629,11 +835,37 @@
 
         <label
           class="slider-group"
-          title="Maximum allowed visual drift from base"
+          title="Maximum allowed visual drift (difference) from base"
         >
           Max Drift
-          <input type="range" id="maxDrift" min="15" max="140" value="75" />
-          <span class="slider-val" id="maxDriftVal">75</span>
+          <input type="range" id="maxDrift" min="2" max="140" value="65" />
+          <span class="slider-val" id="maxDriftVal">65</span>
+        </label>
+
+        <div
+          class="tabs sm-tabs"
+          id="driftModeTabs"
+          title="Visual drift calculation strategy: continuous Noise waves vs pseudo-random jumps"
+        >
+          <button class="tab active" data-drift="noise">Noise</button>
+          <button class="tab" data-drift="random">Random</button>
+        </div>
+
+        <label
+          class="slider-group"
+          id="driftMultWrap"
+          title="Multiplier for the noise function input coordinate (wave frequency)"
+        >
+          Noise Mult
+          <input
+            type="range"
+            id="driftMult"
+            min="0.1"
+            max="4.0"
+            step="0.1"
+            value="1.0"
+          />
+          <span class="slider-val" id="driftMultVal">1.0×</span>
         </label>
 
         <label
@@ -735,6 +967,7 @@
         <div class="spacer"></div>
 
         <div class="select-bar">
+          <button id="expandHistoryBtn" class="sm-btn" title="Pop out history to full screen grid (G / Esc)">⛶ Fullscreen</button>
           <button id="toggleSelectBtn" class="sm-btn" title="Select multiple images">Select</button>
 
           <div id="selectionActions" class="selection-actions hidden">
@@ -756,11 +989,51 @@
           <kbd>Space</kbd> / Click: Generate &nbsp;·&nbsp; <kbd>←</kbd>
           <kbd>→</kbd> History &nbsp;·&nbsp; Hold <kbd>O</kbd> Original
           &nbsp;·&nbsp; <kbd>U</kbd> Use as Source &nbsp;·&nbsp; <kbd>P</kbd> Favorite
-          &nbsp;·&nbsp; <kbd>S</kbd> Save PNG
+          &nbsp;·&nbsp; <kbd>G</kbd> Fullscreen &nbsp;·&nbsp; <kbd>S</kbd> Save PNG
         </span>
         <span id="statusText">Ready</span>
       </div>
     </footer>
+
+    <!-- Fullscreen History Modal -->
+    <div id="historyModal" class="history-modal hidden">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h2>History Gallery</h2>
+          <span class="modal-subtitle" id="modalSubtitle">0 items</span>
+        </div>
+
+        <div class="history-tabs">
+          <button class="htab active" id="modalTabAll">All (<span id="modalAllCount">0</span>)</button>
+          <button class="htab" id="modalTabFav">❤️ Favorites (<span id="modalFavCount">0</span>)</button>
+        </div>
+
+        <div class="spacer"></div>
+
+        <div class="select-bar">
+          <button id="modalToggleSelectBtn" class="sm-btn">Select</button>
+
+          <div id="modalSelectionActions" class="selection-actions hidden">
+            <span class="sel-count" id="modalSelectedCountText">0 Selected</span>
+            <button id="modalSelectAllBtn" class="sm-btn">Select All</button>
+            <button id="modalFavSelectedBtn" class="sm-btn">❤️ Favorite</button>
+            <button id="modalDownloadSelectedBtn" class="sm-btn primary-sm" disabled>Download (0)</button>
+            <button id="modalDeleteSelectedBtn" class="sm-btn danger-sm" disabled>Delete (0)</button>
+            <button id="modalCancelSelectBtn" class="sm-btn">Cancel</button>
+          </div>
+        </div>
+
+        <button id="closeModalBtn" class="close-btn" title="Close full screen (Esc)">✕</button>
+      </div>
+
+      <div class="modal-body" id="modalGridWrap">
+        <div class="history-grid" id="historyGrid"></div>
+      </div>
+
+      <div class="modal-footer">
+        <span>Tip: Hold <kbd>Shift</kbd> to range-select · Click and drag to box-select · <kbd>Esc</kbd> to exit fullscreen</span>
+      </div>
+    </div>
 
     <script type="module">
       import { randomSeedString } from "./lib/prng.js";
@@ -812,6 +1085,9 @@
       let historyFilter = "all"; // 'all' | 'favorites'
       let isSelecting = false;
       const selectedIds = new Set();
+      let driftMode = "noise"; // 'noise' | 'random'
+      let anchorIndex = -1;
+      let isShiftDown = false;
 
       const $ = (id) => document.getElementById(id);
       const fileInput = $("fileInput");
@@ -828,6 +1104,11 @@
       const intensityEl = $("intensity");
       const intensityVal = $("intensityVal");
       const maxDriftEl = $("maxDrift");
+      const maxDriftVal = $("maxDriftVal");
+      const driftModeTabs = $("driftModeTabs");
+      const driftMult = $("driftMult");
+      const driftMultVal = $("driftMultVal");
+      const driftMultWrap = $("driftMultWrap");
       const qualityEl = $("quality");
       const includeDqtEl = $("includeDqt");
       const patternSelect = $("patternSelect");
@@ -852,6 +1133,7 @@
       const allCount = $("allCount");
       const favCount = $("favCount");
 
+      const expandHistoryBtn = $("expandHistoryBtn");
       const toggleSelectBtn = $("toggleSelectBtn");
       const selectionActions = $("selectionActions");
       const selectedCountText = $("selectedCountText");
@@ -860,6 +1142,24 @@
       const downloadSelectedBtn = $("downloadSelectedBtn");
       const deleteSelectedBtn = $("deleteSelectedBtn");
       const cancelSelectBtn = $("cancelSelectBtn");
+
+      // Fullscreen Modal Elements
+      const historyModal = $("historyModal");
+      const historyGrid = $("historyGrid");
+      const modalSubtitle = $("modalSubtitle");
+      const closeModalBtn = $("closeModalBtn");
+      const modalTabAll = $("modalTabAll");
+      const modalTabFav = $("modalTabFav");
+      const modalAllCount = $("modalAllCount");
+      const modalFavCount = $("modalFavCount");
+      const modalToggleSelectBtn = $("modalToggleSelectBtn");
+      const modalSelectionActions = $("modalSelectionActions");
+      const modalSelectedCountText = $("modalSelectedCountText");
+      const modalSelectAllBtn = $("modalSelectAllBtn");
+      const modalFavSelectedBtn = $("modalFavSelectedBtn");
+      const modalDownloadSelectedBtn = $("modalDownloadSelectedBtn");
+      const modalDeleteSelectedBtn = $("modalDeleteSelectedBtn");
+      const modalCancelSelectBtn = $("modalCancelSelectBtn");
 
       function getBackgroundDimensions() {
         const [rw, rh] = ratioSelect.value.split(":").map(Number);
@@ -919,8 +1219,13 @@
       }
 
       function updateTabCounts() {
-        allCount.textContent = history.length;
-        favCount.textContent = history.filter((it) => it.favorite).length;
+        const all = history.length;
+        const favs = history.filter((it) => it.favorite).length;
+        allCount.textContent = all;
+        favCount.textContent = favs;
+        modalAllCount.textContent = all;
+        modalFavCount.textContent = favs;
+        modalSubtitle.textContent = `${all} item${all === 1 ? "" : "s"}${favs > 0 ? ` (${favs} favorite${favs === 1 ? "" : "s"})` : ""}`;
       }
 
       async function initEngine() {
@@ -979,10 +1284,17 @@
         const isBg = mode === "background";
 
         document
-          .querySelectorAll(".tab")
+          .querySelectorAll(".tab[data-mode]")
           .forEach((t) =>
             t.classList.toggle("active", t.dataset.mode === mode),
           );
+        driftModeTabs
+          .querySelectorAll(".tab")
+          .forEach((t) =>
+            t.classList.toggle("active", t.dataset.drift === driftMode),
+          );
+        driftMultWrap.style.opacity = driftMode === "noise" ? "1" : "0.35";
+        driftMultWrap.style.pointerEvents = driftMode === "noise" ? "auto" : "none";
         document
           .querySelectorAll(".pill")
           .forEach((p) =>
@@ -1097,7 +1409,8 @@
 
         const { width: bgWidth, height: bgHeight } = getBackgroundDimensions();
         const intensity = Math.max(1, Math.min(120, Number(intensityEl.value) || 10));
-        const maxDrift = Math.max(15, Math.min(150, Number(maxDriftEl.value) || 75));
+        const maxDrift = Math.max(2, Math.min(150, Number(maxDriftEl.value) || 65));
+        const driftMultiplier = Math.max(0.1, Math.min(5.0, Number(driftMult.value) || 1.0));
         const quality = Math.max(30, Math.min(96, Number(qualityEl.value) || 85));
 
         try {
@@ -1119,6 +1432,8 @@
                 quality,
                 includeDqt: includeDqtEl.checked,
                 matchImagePalette: matchPaletteEl.checked && hasImage,
+                driftMode,
+                driftMultiplier,
               }),
             });
 
@@ -1137,7 +1452,14 @@
             if (mode === "image") {
               res = await callWorker("glitchUploadedImage", {
                 quality,
-                opts: { seed, intensity, maxDrift, includeDqt: includeDqtEl.checked },
+                opts: {
+                  seed,
+                  intensity,
+                  maxDrift,
+                  includeDqt: includeDqtEl.checked,
+                  driftMode,
+                  driftMultiplier,
+                },
               });
             } else {
               res = await callWorker("generateGlitchBackground", {
@@ -1151,6 +1473,8 @@
                   maxDrift,
                   quality,
                   matchImagePalette: matchPaletteEl.checked && hasImage,
+                  driftMode,
+                  driftMultiplier,
                 },
               });
             }
@@ -1172,6 +1496,8 @@
                 intensity,
                 maxDrift,
                 includeDqt: includeDqtEl.checked,
+                driftMode,
+                driftMultiplier,
               });
             } else {
               result = await generateGlitchBackground({
@@ -1185,6 +1511,8 @@
                 quality,
                 imagePalette: imageState?.palette || null,
                 matchImagePalette: matchPaletteEl.checked && hasImage,
+                driftMode,
+                driftMultiplier,
               });
             }
             blob = result.blob;
@@ -1254,54 +1582,165 @@
         renderHistory();
       }
 
+      let lastHoveredIdx = -1;
+      let justFinishedDrag = false;
+
+      function previewShiftRange(hoverIdx) {
+        if (!isShiftDown || anchorIndex === -1 || hoverIdx === -1) {
+          clearShiftPreview();
+          return;
+        }
+        const minIdx = Math.min(anchorIndex, hoverIdx);
+        const maxIdx = Math.max(anchorIndex, hoverIdx);
+
+        const thumbs = historyStrip.querySelectorAll(".thumb");
+        thumbs.forEach((el, i) => {
+          el.classList.toggle("shift-preview", i >= minIdx && i <= maxIdx);
+        });
+
+        const cards = historyGrid.querySelectorAll(".grid-card");
+        cards.forEach((el, i) => {
+          el.classList.toggle("shift-preview", i >= minIdx && i <= maxIdx);
+        });
+      }
+
+      function clearShiftPreview() {
+        historyStrip.querySelectorAll(".thumb.shift-preview").forEach((el) => {
+          el.classList.remove("shift-preview");
+        });
+        historyGrid.querySelectorAll(".grid-card.shift-preview").forEach((el) => {
+          el.classList.remove("shift-preview");
+        });
+      }
+
+      function handleItemHover(visibleIdx) {
+        lastHoveredIdx = visibleIdx;
+        if (isShiftDown && anchorIndex !== -1) {
+          previewShiftRange(visibleIdx);
+        }
+      }
+
+      function handleItemLeave() {
+        lastHoveredIdx = -1;
+        clearShiftPreview();
+      }
+
+      function handleItemClick(item, visibleIdx, event) {
+        if (justFinishedDrag) return;
+        if (event.shiftKey && anchorIndex !== -1) {
+          if (!isSelecting) setSelectMode(true);
+          const visible = getVisibleHistory();
+          const minIdx = Math.min(anchorIndex, visibleIdx);
+          const maxIdx = Math.max(anchorIndex, visibleIdx);
+          for (let i = minIdx; i <= maxIdx; i++) {
+            if (visible[i]) selectedIds.add(visible[i].id);
+          }
+          clearShiftPreview();
+          updateSelectionUI();
+          renderHistory();
+        } else if (isSelecting) {
+          toggleSelectItem(item.id);
+          anchorIndex = visibleIdx;
+        } else {
+          const masterIdx = history.indexOf(item);
+          selectHistory(masterIdx);
+          anchorIndex = visibleIdx;
+        }
+      }
+
       function renderHistory() {
-        historyStrip.innerHTML = "";
         const visible = getVisibleHistory();
 
+        // 1. Render bottom history strip
+        historyStrip.innerHTML = "";
         if (visible.length === 0) {
           const emptyMsg =
             historyFilter === "favorites"
               ? "No favorites yet. Click ♡ Favorite or press P on any generation."
               : "History appears here";
           historyStrip.innerHTML = `<span class="history-empty">${emptyMsg}</span>`;
-          return;
+        } else {
+          visible.forEach((item, visibleIdx) => {
+            const masterIdx = history.indexOf(item);
+            const div = document.createElement("div");
+            div.className =
+              "thumb" +
+              (masterIdx === currentIndex ? " active" : "") +
+              (item.favorite ? " is-favorite" : "") +
+              (selectedIds.has(item.id) ? " is-selected" : "");
+            div.dataset.id = item.id;
+
+            div.onclick = (e) => handleItemClick(item, visibleIdx, e);
+            div.onmouseenter = () => handleItemHover(visibleIdx);
+            div.onmouseleave = handleItemLeave;
+
+            const tag = ENGINE_SHORT[item.engine] || "GL";
+            div.innerHTML = `
+              <img src="${item.url}" alt="" loading="lazy" draggable="false" />
+              <span class="fav-badge" title="Favorite">❤️</span>
+              <span class="select-check">✓</span>
+              <span class="tag">${tag}</span>
+            `;
+            historyStrip.appendChild(div);
+          });
+
+          if (!isSelecting && currentIndex >= 0) {
+            const activeEl = historyStrip.querySelector(".thumb.active");
+            if (activeEl) {
+              activeEl.scrollIntoView({
+                behavior: "smooth",
+                inline: "nearest",
+                block: "nearest",
+              });
+            }
+          }
         }
 
-        visible.forEach((item) => {
-          const masterIdx = history.indexOf(item);
-          const div = document.createElement("div");
-          div.className =
-            "thumb" +
-            (masterIdx === currentIndex ? " active" : "") +
-            (item.favorite ? " is-favorite" : "") +
-            (selectedIds.has(item.id) ? " is-selected" : "");
+        // 2. Render fullscreen history grid
+        historyGrid.innerHTML = "";
+        if (visible.length === 0) {
+          const emptyMsg =
+            historyFilter === "favorites"
+              ? "No favorites yet. Mark favorites with ❤️ in the gallery or press P."
+              : "No history items yet. Synthesize some glitches to populate!";
+          historyGrid.innerHTML = `<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--muted);">${emptyMsg}</div>`;
+        } else {
+          visible.forEach((item, visibleIdx) => {
+            const masterIdx = history.indexOf(item);
+            const card = document.createElement("div");
+            card.className =
+              "grid-card" +
+              (masterIdx === currentIndex ? " active" : "") +
+              (item.favorite ? " is-favorite" : "") +
+              (selectedIds.has(item.id) ? " is-selected" : "");
+            card.dataset.id = item.id;
 
-          div.onclick = () => {
-            if (isSelecting) {
-              toggleSelectItem(item.id);
-            } else {
-              selectHistory(masterIdx);
+            card.onclick = (e) => handleItemClick(item, visibleIdx, e);
+            card.onmouseenter = () => handleItemHover(visibleIdx);
+            card.onmouseleave = handleItemLeave;
+
+            const tag = ENGINE_SHORT[item.engine] || "GL";
+            card.innerHTML = `
+              <img src="${item.url}" alt="" loading="lazy" draggable="false" />
+              <span class="fav-badge" title="Favorite">❤️</span>
+              <span class="select-check">✓</span>
+              <div class="card-info">
+                <span class="card-tag">${tag}</span>
+                <span>${item.diff} drift</span>
+              </div>
+            `;
+            historyGrid.appendChild(card);
+          });
+
+          if (!isSelecting && currentIndex >= 0) {
+            const activeCard = historyGrid.querySelector(".grid-card.active");
+            if (activeCard && !historyModal.classList.contains("hidden")) {
+              activeCard.scrollIntoView({
+                behavior: "smooth",
+                inline: "nearest",
+                block: "nearest",
+              });
             }
-          };
-
-          const tag = ENGINE_SHORT[item.engine] || "GL";
-          div.innerHTML = `
-            <img src="${item.url}" alt="" loading="lazy" />
-            <span class="fav-badge" title="Favorite">❤️</span>
-            <span class="select-check">✓</span>
-            <span class="tag">${tag}</span>
-          `;
-          historyStrip.appendChild(div);
-        });
-
-        if (!isSelecting && currentIndex >= 0) {
-          const activeEl = historyStrip.querySelector(".thumb.active");
-          if (activeEl) {
-            activeEl.scrollIntoView({
-              behavior: "smooth",
-              inline: "nearest",
-              block: "nearest",
-            });
           }
         }
       }
@@ -1313,9 +1752,13 @@
           selectedIds.clear();
           toggleSelectBtn.classList.remove("hidden");
           selectionActions.classList.add("hidden");
+          modalToggleSelectBtn.classList.remove("hidden");
+          modalSelectionActions.classList.add("hidden");
         } else {
           toggleSelectBtn.classList.add("hidden");
           selectionActions.classList.remove("hidden");
+          modalToggleSelectBtn.classList.add("hidden");
+          modalSelectionActions.classList.remove("hidden");
         }
         updateSelectionUI();
         renderHistory();
@@ -1334,15 +1777,128 @@
       function updateSelectionUI() {
         const count = selectedIds.size;
         selectedCountText.textContent = `${count} Selected`;
+        modalSelectedCountText.textContent = `${count} Selected`;
+
         downloadSelectedBtn.textContent = `Download (${count})`;
         downloadSelectedBtn.disabled = count === 0;
+        modalDownloadSelectedBtn.textContent = `Download (${count})`;
+        modalDownloadSelectedBtn.disabled = count === 0;
+
         deleteSelectedBtn.textContent = `Delete (${count})`;
         deleteSelectedBtn.disabled = count === 0;
+        modalDeleteSelectedBtn.textContent = `Delete (${count})`;
+        modalDeleteSelectedBtn.disabled = count === 0;
+
         favSelectedBtn.disabled = count === 0;
+        modalFavSelectedBtn.disabled = count === 0;
 
         const visible = getVisibleHistory();
         const allSel = visible.length > 0 && visible.every((it) => selectedIds.has(it.id));
-        selectAllBtn.textContent = allSel ? "Deselect All" : "Select All";
+        const selText = allSel ? "Deselect All" : "Select All";
+        selectAllBtn.textContent = selText;
+        modalSelectAllBtn.textContent = selText;
+      }
+
+      function setHistoryFilter(filter) {
+        historyFilter = filter;
+        tabAll.classList.toggle("active", filter === "all");
+        tabFav.classList.toggle("active", filter === "favorites");
+        modalTabAll.classList.toggle("active", filter === "all");
+        modalTabFav.classList.toggle("active", filter === "favorites");
+        renderHistory();
+      }
+
+      function openFullscreenHistory() {
+        historyModal.classList.remove("hidden");
+        renderHistory();
+      }
+
+      function closeFullscreenHistory() {
+        historyModal.classList.add("hidden");
+        clearShiftPreview();
+      }
+
+      function setupMarqueeDrag(container, itemSelector) {
+        let startX = 0;
+        let startY = 0;
+        let isDragging = false;
+        let marquee = null;
+
+        container.addEventListener("mousedown", (e) => {
+          if (e.button !== 0) return;
+          if (e.target.closest("button, a, input, select")) return;
+
+          startX = e.clientX;
+          startY = e.clientY;
+          isDragging = false;
+
+          const onMouseMove = (moveEvent) => {
+            const dx = moveEvent.clientX - startX;
+            const dy = moveEvent.clientY - startY;
+
+            if (!isDragging) {
+              if (Math.hypot(dx, dy) > 5) {
+                isDragging = true;
+                marquee = document.createElement("div");
+                marquee.className = "selection-marquee";
+                document.body.appendChild(marquee);
+              }
+            }
+
+            if (isDragging && marquee) {
+              moveEvent.preventDefault();
+              const minX = Math.min(startX, moveEvent.clientX);
+              const minY = Math.min(startY, moveEvent.clientY);
+              const w = Math.abs(dx);
+              const h = Math.abs(dy);
+
+              marquee.style.left = `${minX}px`;
+              marquee.style.top = `${minY}px`;
+              marquee.style.width = `${w}px`;
+              marquee.style.height = `${h}px`;
+
+              const items = container.querySelectorAll(itemSelector);
+              items.forEach((item) => {
+                const r = item.getBoundingClientRect();
+                const hit = !(
+                  minX > r.right ||
+                  minX + w < r.left ||
+                  minY > r.bottom ||
+                  minY + h < r.top
+                );
+                item.classList.toggle("drag-hover", hit);
+              });
+            }
+          };
+
+          const onMouseUp = () => {
+            window.removeEventListener("mousemove", onMouseMove);
+            window.removeEventListener("mouseup", onMouseUp);
+
+            if (isDragging && marquee) {
+              marquee.remove();
+              marquee = null;
+              justFinishedDrag = true;
+              setTimeout(() => {
+                justFinishedDrag = false;
+              }, 60);
+
+              const hoveredItems = container.querySelectorAll(`${itemSelector}.drag-hover`);
+              if (hoveredItems.length > 0) {
+                if (!isSelecting) setSelectMode(true);
+                hoveredItems.forEach((el) => {
+                  if (el.dataset.id) selectedIds.add(el.dataset.id);
+                  el.classList.remove("drag-hover");
+                });
+                updateSelectionUI();
+                renderHistory();
+              }
+            }
+          };
+
+          window.addEventListener("mousemove", onMouseMove);
+          window.addEventListener("mouseup", onMouseUp);
+        });
       }
 
       function setCompare(show) {
@@ -1439,8 +1995,9 @@
       let sliderTimer = null;
       function onControlTweak() {
         updateIntensityDisplay();
-        $("maxDriftVal").textContent = maxDriftEl.value;
-        $("qualityVal").textContent = qualityEl.value;
+        maxDriftVal.textContent = maxDriftEl.value;
+        driftMultVal.textContent = `${Number(driftMult.value).toFixed(1)}×`;
+        qualityVal.textContent = qualityEl.value;
         if (seedLocked && (mode === "background" || hasImage)) {
           clearTimeout(sliderTimer);
           sliderTimer = setTimeout(
@@ -1451,6 +2008,7 @@
       }
       intensityEl.oninput = onControlTweak;
       maxDriftEl.oninput = onControlTweak;
+      driftMult.oninput = onControlTweak;
       qualityEl.oninput = onControlTweak;
       includeDqtEl.onchange = () =>
         seedLocked && generate({ forceNewSeed: false });
@@ -1468,11 +2026,23 @@
       matchPaletteEl.onchange = () => generate({ forceNewSeed: !seedLocked });
 
       // Mode & Engine tabs
-      document.querySelectorAll(".tab").forEach((btn) => {
+      document.querySelectorAll(".tab[data-mode]").forEach((btn) => {
         btn.onclick = () => {
           mode = btn.dataset.mode;
           syncUI();
           if (mode === "background") generate({ forceNewSeed: !seedLocked });
+        };
+      });
+
+      driftModeTabs.querySelectorAll(".tab").forEach((btn) => {
+        btn.onclick = () => {
+          driftMode = btn.dataset.drift;
+          driftModeTabs.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === btn));
+          driftMultWrap.style.opacity = driftMode === "noise" ? "1" : "0.35";
+          driftMultWrap.style.pointerEvents = driftMode === "noise" ? "auto" : "none";
+          if (seedLocked && (mode === "background" || hasImage)) {
+            generate({ forceNewSeed: false });
+          }
         };
       });
 
@@ -1518,25 +2088,18 @@
       savePngBtn.onclick = () => savePng();
       saveJpgBtn.onclick = () => saveJpg();
 
-      // Gallery toolbar handlers
-      tabAll.onclick = () => {
-        historyFilter = "all";
-        tabAll.classList.add("active");
-        tabFav.classList.remove("active");
-        renderHistory();
-      };
+      // Fullscreen History Modal Controls
+      expandHistoryBtn.onclick = openFullscreenHistory;
+      closeModalBtn.onclick = closeFullscreenHistory;
 
-      tabFav.onclick = () => {
-        historyFilter = "favorites";
-        tabFav.classList.add("active");
-        tabAll.classList.remove("active");
-        renderHistory();
-      };
+      // Gallery filter tabs
+      tabAll.onclick = () => setHistoryFilter("all");
+      tabFav.onclick = () => setHistoryFilter("favorites");
+      modalTabAll.onclick = () => setHistoryFilter("all");
+      modalTabFav.onclick = () => setHistoryFilter("favorites");
 
-      toggleSelectBtn.onclick = () => setSelectMode(true);
-      cancelSelectBtn.onclick = () => setSelectMode(false);
-
-      selectAllBtn.onclick = () => {
+      // Gallery Batch Selection Handlers
+      function toggleSelectAll() {
         const visible = getVisibleHistory();
         const allSel = visible.length > 0 && visible.every((it) => selectedIds.has(it.id));
         if (allSel) {
@@ -1546,9 +2109,9 @@
         }
         updateSelectionUI();
         renderHistory();
-      };
+      }
 
-      favSelectedBtn.onclick = async () => {
+      async function toggleFavSelected() {
         if (selectedIds.size === 0) return;
         const selectedItems = history.filter((it) => selectedIds.has(it.id));
         const allFav = selectedItems.every((it) => it.favorite);
@@ -1566,9 +2129,9 @@
         updateSelectionUI();
         renderHistory();
         statusText.textContent = `${targetFav ? "Added" : "Removed"} ${selectedItems.length} to/from favorites`;
-      };
+      }
 
-      downloadSelectedBtn.onclick = () => {
+      function downloadSelected() {
         const toDownload = history.filter((it) => selectedIds.has(it.id));
         if (toDownload.length === 0) return;
         statusText.textContent = `Downloading ${toDownload.length} image(s)...`;
@@ -1580,9 +2143,9 @@
             a.click();
           }, i * 150);
         });
-      };
+      }
 
-      deleteSelectedBtn.onclick = async () => {
+      async function deleteSelected() {
         const ids = [...selectedIds];
         if (ids.length === 0) return;
         const count = ids.length;
@@ -1609,7 +2172,25 @@
         }
         renderHistory();
         statusText.textContent = `Deleted ${count} image(s)`;
-      };
+      }
+
+      toggleSelectBtn.onclick = () => setSelectMode(true);
+      cancelSelectBtn.onclick = () => setSelectMode(false);
+      selectAllBtn.onclick = toggleSelectAll;
+      favSelectedBtn.onclick = toggleFavSelected;
+      downloadSelectedBtn.onclick = downloadSelected;
+      deleteSelectedBtn.onclick = deleteSelected;
+
+      modalToggleSelectBtn.onclick = () => setSelectMode(true);
+      modalCancelSelectBtn.onclick = () => setSelectMode(false);
+      modalSelectAllBtn.onclick = toggleSelectAll;
+      modalFavSelectedBtn.onclick = toggleFavSelected;
+      modalDownloadSelectedBtn.onclick = downloadSelected;
+      modalDeleteSelectedBtn.onclick = deleteSelected;
+
+      // Marquee box-selection drag listeners
+      setupMarqueeDrag(historyStrip, ".thumb");
+      setupMarqueeDrag($("modalGridWrap"), ".grid-card");
 
       compareBtn.onmousedown = () => setCompare(true);
       compareBtn.onmouseup = () => setCompare(false);
@@ -1636,6 +2217,22 @@
         if (file) uploadFile(file);
       });
 
+      // Shift key detection for range selection preview
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Shift") {
+          isShiftDown = true;
+          if (lastHoveredIdx !== -1) {
+            previewShiftRange(lastHoveredIdx);
+          }
+        }
+      });
+      window.addEventListener("keyup", (e) => {
+        if (e.key === "Shift") {
+          isShiftDown = false;
+          clearShiftPreview();
+        }
+      });
+
       // Keyboard shortcuts
       window.addEventListener("keydown", (e) => {
         if (document.activeElement === seedInput) return;
@@ -1658,6 +2255,18 @@
           toggleFavorite();
         } else if (e.code === "KeyU") {
           useAsSource();
+        } else if (e.code === "KeyG") {
+          if (historyModal.classList.contains("hidden")) {
+            openFullscreenHistory();
+          } else {
+            closeFullscreenHistory();
+          }
+        } else if (e.code === "Escape") {
+          if (!historyModal.classList.contains("hidden")) {
+            closeFullscreenHistory();
+          } else if (isSelecting) {
+            setSelectMode(false);
+          }
         } else if (e.code === "KeyS") {
           e.preventDefault();
           savePng();
