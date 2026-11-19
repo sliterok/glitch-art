@@ -862,9 +862,8 @@
         </button>
         <button
           id="useSourceBtn"
-          class="hidden"
           disabled
-          title="Use this frame as source"
+          title="Use this frame as active glitch source without duplicating to history (U)"
         >
           Use as Source
         </button>
@@ -1054,7 +1053,7 @@
         <span>
           <kbd>Space</kbd> / Click: Generate &nbsp;·&nbsp; <kbd>←</kbd>
           <kbd>→</kbd> History &nbsp;·&nbsp; Hold <kbd>O</kbd> Original
-          &nbsp;·&nbsp; <kbd>Ctrl+V</kbd> Paste &nbsp;·&nbsp; <kbd>P</kbd> Favorite
+          &nbsp;·&nbsp; <kbd>U</kbd> Use as Source &nbsp;·&nbsp; <kbd>Ctrl+V</kbd> Paste &nbsp;·&nbsp; <kbd>P</kbd> Favorite
           &nbsp;·&nbsp; <kbd>G</kbd> Fullscreen &nbsp;·&nbsp; <kbd>S</kbd> Save PNG
         </span>
         <span id="statusText">Ready</span>
@@ -1437,8 +1436,9 @@
       let activeSourceId = null;
 
       async function setActiveSourceFromRecord(item) {
-        if (!item || item.engine !== "source" || activeSourceId === item.id) return;
+        if (!item || activeSourceId === item.id) return;
         activeSourceId = item.id;
+        currentSourceRecord = item;
         try {
           const q = Number(qualityEl.value);
           const file = new File([item.blob], `source-${item.id}.jpg`, { type: "image/jpeg" });
@@ -1468,6 +1468,10 @@
           }
           updateIntensityRange();
           syncUI();
+          renderHistory();
+          if (currentIndex >= 0 && history[currentIndex]) {
+            useSourceBtn.disabled = history[currentIndex] === currentSourceRecord;
+          }
           statusText.textContent = `Active source: ${item.width}×${item.height}px (Space to glitch)`;
         } catch (err) {
           console.warn("Failed to activate source from item:", err);
@@ -1762,10 +1766,10 @@
         }
 
         favoriteBtn.disabled = false;
-        useSourceBtn.disabled = item.engine === "source";
+        useSourceBtn.disabled = !item || item === currentSourceRecord;
         savePngBtn.disabled = false;
         saveJpgBtn.disabled = false;
-        compareBtn.disabled = !hasImage || item.engine === "source";
+        compareBtn.disabled = !hasImage || item === currentSourceRecord;
         favoriteBtn.classList.toggle("favorited", item.favorite);
         favoriteBtn.textContent = item.favorite ? "❤️ Favorited" : "♡ Favorite";
         favoriteBtn.title = item.favorite ? "Remove from Favorites (P)" : "Add to Favorites (P)";
@@ -2212,16 +2216,12 @@
       async function useAsSource() {
         if (currentIndex < 0 || !history[currentIndex]) return;
         const item = history[currentIndex];
-        statusText.textContent = "Setting frame as new image glitch source...";
+        statusText.textContent = "Activating frame as image glitch source...";
 
         mode = "image";
         syncUI();
-
-        const file = new File([item.blob], `glitch-source-${item.seed || Date.now()}.jpg`, {
-          type: "image/jpeg",
-        });
-        await uploadFile(file, true);
-        statusText.textContent = "Saved frame as new source image! Ready to glitch (Space)";
+        await setActiveSourceFromRecord(item);
+        statusText.textContent = `Active source updated to this frame (no duplicate SRC added to history). Space to glitch!`;
       }
 
       function savePng() {
@@ -2592,6 +2592,8 @@
           syncUI();
         } else if (e.code === "KeyP") {
           toggleFavorite();
+        } else if (e.code === "KeyU") {
+          useAsSource();
         } else if (e.code === "KeyG") {
           if (historyModal.classList.contains("hidden")) {
             openFullscreenHistory();

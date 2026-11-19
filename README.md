@@ -34,7 +34,7 @@ Synthesize seeded glitch backdrops from scratch without uploading an image:
 - **Marquee Box Drag Selection**: Click and drag a selection rectangle across items in either the footer strip or the fullscreen grid to effortlessly batch-select frames.
 - **Favorites Album (❤️)**: Easily bookmark frames with the `Favorite` button or `P` hotkey.
 - **Batch Actions**: Multi-select mode with round checkbox badges. Batch action bar supports **Select All**, **Download (N) / Download ZIP (N)**, **Delete (N)**, and **Favorite (N)**.
-- **Non-Mutating Source Architecture**: Sourced images remain strictly the original uploaded or pasted files; generating glitches or browsing history will never mutate or re-source generated outputs.
+- **"Use as Source" In-Memory Feedback Loop (U)**: Take any generated background or historic glitch frame and set it directly as the active source for Image Glitch mode without duplicating or re-importing it with a `SRC` tag into your history gallery.
 - **Exponential Intensity Strategy ($e^n$)**: Intensity maps exponentially ($e^n$) rather than linearly, with the slider range automatically adapting to the image's maximum resolution (up to 360 mutations, e.g. 205 at 1024px, 360 at 1920px) so visual glitch density scales realistically.
 
 ### 4. Workflow & Controls
@@ -52,6 +52,7 @@ Synthesize seeded glitch backdrops from scratch without uploading an image:
   - `Space` / Click Preview: Generate next
   - `←` / `→`: Navigate history
   - Hold `O`: View original
+  - `U`: Use active frame as glitch source
   - `Ctrl+V`: Paste image as new source
   - `P`: Toggle Favorite
   - `G`: Toggle Fullscreen History Gallery
