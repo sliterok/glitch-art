@@ -3,17 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>JPEG Glitcher</title>
+    <title>JPEG Glitcher & Background Lab</title>
     <style>
       :root {
-        --bg: #0f1014;
-        --panel: #171920;
-        --border: #2a2d3a;
-        --text: #e8eaef;
-        --muted: #8b91a5;
+        --bg: #0e1015;
+        --panel: #161922;
+        --panel-2: #1e2230;
+        --border: #2a2f40;
+        --text: #eaecf2;
+        --muted: #8a91a8;
         --accent: #6c8cff;
-        --accent-hover: #829dff;
+        --accent-hover: #849fff;
         --pin: #f5b942;
+        --ok: #4dd48d;
       }
       * {
         box-sizing: border-box;
@@ -32,75 +34,147 @@
         user-select: none;
       }
 
-      /* Top Toolbar */
+      /* Header / Controls */
       header {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        padding: 10px 16px;
         background: var(--panel);
         border-bottom: 1px solid var(--border);
+        padding: 8px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .bar-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
         flex-wrap: wrap;
       }
-      .brand {
-        font-weight: 700;
-        font-size: 14px;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
+      .tabs {
+        display: inline-flex;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        padding: 2px;
+      }
+      .tab {
+        background: transparent;
+        border: none;
+        color: var(--muted);
+        padding: 5px 11px;
+        border-radius: 5px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .tab.active {
+        background: var(--panel-2);
         color: var(--text);
       }
-      .controls {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        flex: 1;
+
+      .engine-pills {
+        display: inline-flex;
+        gap: 4px;
         flex-wrap: wrap;
       }
-      .slider-group {
-        display: flex;
+      .pill {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        padding: 5px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .pill.active {
+        border-color: var(--accent);
+        color: var(--text);
+        background: rgba(108, 140, 255, 0.14);
+      }
+
+      select,
+      input[type="text"] {
+        background: var(--bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 5px 8px;
+        font-size: 12px;
+        outline: none;
+      }
+      select:focus,
+      input[type="text"]:focus {
+        border-color: var(--accent);
+      }
+
+      .seed-box {
+        display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 4px;
+      }
+      .seed-box input {
+        width: 112px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        user-select: text;
+      }
+
+      .slider-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
         font-size: 12px;
         color: var(--muted);
       }
       .slider-group input[type="range"] {
-        width: 90px;
+        width: 82px;
         accent-color: var(--accent);
         cursor: pointer;
       }
       .slider-val {
         color: var(--text);
         font-variant-numeric: tabular-nums;
-        min-width: 24px;
+        min-width: 22px;
       }
-      .actions {
-        display: flex;
+
+      .check-group {
+        display: inline-flex;
         align-items: center;
-        gap: 8px;
+        gap: 5px;
+        font-size: 12px;
+        color: var(--muted);
+        cursor: pointer;
       }
+      .check-group input {
+        accent-color: var(--accent);
+        cursor: pointer;
+      }
+
+      .spacer {
+        flex: 1;
+      }
+
       button,
       .file-btn {
-        background: #232633;
+        background: var(--panel-2);
         color: var(--text);
         border: 1px solid var(--border);
-        padding: 7px 12px;
+        padding: 6px 11px;
         border-radius: 6px;
         font-size: 12px;
         font-weight: 500;
         cursor: pointer;
-        transition:
-          background 0.12s,
-          border-color 0.12s;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 5px;
+        transition:
+          background 0.1s,
+          border-color 0.1s;
       }
-      button:hover,
+      button:hover:not(:disabled),
       .file-btn:hover {
-        background: #2d3142;
+        background: #292e40;
       }
       button:disabled {
-        opacity: 0.4;
+        opacity: 0.38;
         cursor: not-allowed;
       }
       button.primary {
@@ -108,10 +182,14 @@
         border-color: var(--accent);
         color: #0b0d14;
         font-weight: 700;
-        padding: 7px 16px;
+        padding: 6px 15px;
       }
       button.primary:hover:not(:disabled) {
         background: var(--accent-hover);
+      }
+      button.active-toggle {
+        border-color: var(--accent);
+        color: var(--accent);
       }
       button.pinned {
         border-color: var(--pin);
@@ -121,7 +199,11 @@
         display: none;
       }
 
-      /* Main Stage */
+      .hidden {
+        display: none !important;
+      }
+
+      /* Main Preview Stage */
       main {
         flex: 1;
         position: relative;
@@ -134,7 +216,7 @@
       #dropzone {
         border: 2px dashed var(--border);
         border-radius: 12px;
-        padding: 48px 64px;
+        padding: 46px 60px;
         text-align: center;
         color: var(--muted);
         cursor: pointer;
@@ -154,6 +236,7 @@
       }
       #dropzone p {
         font-size: 13px;
+        margin-bottom: 14px;
       }
 
       #stage {
@@ -164,19 +247,40 @@
         align-items: center;
         justify-content: center;
       }
-      #preview {
+      .canvas-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         max-width: 100%;
         max-height: 100%;
+      }
+      #preview {
+        max-width: calc(100vw - 48px);
+        max-height: calc(100vh - 220px);
         object-fit: contain;
         border-radius: 4px;
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+        box-shadow: 0 14px 44px rgba(0, 0, 0, 0.6);
         cursor: pointer;
+        display: block;
+      }
+      #fgOverlay {
+        position: absolute;
+        max-width: 68%;
+        max-height: 68%;
+        object-fit: contain;
+        border-radius: 6px;
+        box-shadow:
+          0 18px 48px rgba(0, 0, 0, 0.7),
+          0 0 0 1px rgba(255, 255, 255, 0.16);
+        pointer-events: none;
+        display: none;
       }
       #badge {
         position: absolute;
         top: 8px;
         left: 8px;
-        background: rgba(15, 16, 20, 0.78);
+        background: rgba(14, 16, 21, 0.82);
         border: 1px solid var(--border);
         backdrop-filter: blur(6px);
         padding: 4px 9px;
@@ -185,6 +289,7 @@
         color: var(--muted);
         font-variant-numeric: tabular-nums;
         pointer-events: none;
+        z-index: 3;
       }
       #badge strong {
         color: var(--text);
@@ -194,7 +299,7 @@
       footer {
         background: var(--panel);
         border-top: 1px solid var(--border);
-        padding: 8px 16px;
+        padding: 8px 14px;
         display: flex;
         flex-direction: column;
         gap: 6px;
@@ -204,8 +309,8 @@
         align-items: center;
         gap: 8px;
         overflow-x: auto;
-        padding-bottom: 4px;
-        min-height: 76px;
+        padding-bottom: 3px;
+        min-height: 72px;
       }
       .history-empty {
         font-size: 12px;
@@ -215,13 +320,13 @@
       .thumb {
         position: relative;
         flex: 0 0 auto;
-        width: 68px;
-        height: 68px;
+        width: 66px;
+        height: 66px;
         border-radius: 6px;
         overflow: hidden;
         border: 2px solid transparent;
         cursor: pointer;
-        background: #0b0c10;
+        background: #0a0b0f;
         transition:
           transform 0.1s,
           border-color 0.1s;
@@ -246,11 +351,21 @@
         height: 8px;
         border-radius: 50%;
         background: var(--pin);
-        box-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+        box-shadow: 0 0 4px #000;
         display: none;
       }
       .thumb.pinned .pin-dot {
         display: block;
+      }
+      .thumb .tag {
+        position: absolute;
+        bottom: 2px;
+        left: 2px;
+        background: rgba(14, 16, 21, 0.78);
+        color: var(--text);
+        font-size: 9px;
+        padding: 1px 4px;
+        border-radius: 3px;
       }
       .hints {
         display: flex;
@@ -259,7 +374,7 @@
         color: var(--muted);
       }
       kbd {
-        background: #232633;
+        background: var(--panel-2);
         border: 1px solid var(--border);
         border-radius: 3px;
         padding: 1px 5px;
@@ -271,67 +386,145 @@
   </head>
   <body>
     <header>
-      <div class="brand">JPEG Glitcher</div>
-      <div class="controls">
+      <!-- Row 1: Mode, Engine, Seed, Primary Actions -->
+      <div class="bar-row">
+        <div class="tabs">
+          <button class="tab active" data-mode="image">Image Glitch</button>
+          <button class="tab" data-mode="background">Glitch Backgrounds</button>
+        </div>
+
+        <div class="engine-pills hidden" id="enginePills">
+          <button
+            class="pill active"
+            data-engine="procedural-jpeg"
+            title="Option 1: Seeded canvas -> real JPEG byte glitching"
+          >
+            1. Procedural JPEG
+          </button>
+          <button
+            class="pill"
+            data-engine="palette-jpeg"
+            title="Option 2: Harmonized palette JPEG glitch for framing photos"
+          >
+            2. Palette JPEG
+          </button>
+          <button
+            class="pill"
+            data-engine="algo-synth"
+            title="Option 3: Pure algorithmic YCbCr glitch synthesizer (<15ms)"
+          >
+            3. Algo Synth
+          </button>
+          <button
+            class="pill"
+            data-engine="dqt-hybrid"
+            title="Option 4: Quantization Table (DQT) + Scan Byte hybrid"
+          >
+            4. DQT + Scan
+          </button>
+        </div>
+
         <label class="file-btn">
           Upload Image
           <input type="file" id="fileInput" accept="image/*" />
         </label>
 
-        <label
-          class="slider-group"
-          title="Number of random bytes edited in the scan data"
+        <div
+          class="seed-box"
+          title="Deterministic seed (Space rolls a new seed unless locked)"
         >
-          Bytes
-          <input type="range" id="mutations" min="1" max="30" value="6" />
-          <span class="slider-val" id="mutationsVal">6</span>
+          <input type="text" id="seedInput" placeholder="seed..." />
+          <button
+            id="lockSeedBtn"
+            title="Lock seed so slider changes re-render the same seed"
+          >
+            Unlock
+          </button>
+        </div>
+
+        <div class="spacer"></div>
+
+        <button id="compareBtn" disabled title="Hold to view original (O)">
+          Original
+        </button>
+        <button
+          id="overlayBtn"
+          class="hidden"
+          disabled
+          title="Preview uploaded image centered on this background (F)"
+        >
+          FG Overlay
+        </button>
+        <button id="pinBtn" disabled title="Pin so history won't evict it (P)">
+          Pin
+        </button>
+        <button id="savePngBtn" disabled title="Save PNG (S)">Save PNG</button>
+        <button id="saveJpgBtn" disabled title="Save JPG">JPG</button>
+        <button id="glitchBtn" class="primary" disabled>Glitch (Space)</button>
+      </div>
+
+      <!-- Row 2: Sliders & Mode-specific options -->
+      <div class="bar-row">
+        <label class="slider-group" title="Mutations / glitch band density">
+          Intensity
+          <input type="range" id="intensity" min="1" max="24" value="6" />
+          <span class="slider-val" id="intensityVal">6</span>
         </label>
 
         <label
           class="slider-group"
-          title="Maximum allowed pixel drift from the original before retrying"
+          title="Maximum allowed visual drift from base"
         >
           Max Drift
-          <input type="range" id="maxDrift" min="15" max="140" value="70" />
-          <span class="slider-val" id="maxDriftVal">70</span>
+          <input type="range" id="maxDrift" min="15" max="140" value="75" />
+          <span class="slider-val" id="maxDriftVal">75</span>
         </label>
 
         <label
           class="slider-group"
-          title="Baseline JPEG quality (affects scan density & band style)"
+          title="JPEG quality (or block quantization in Algo Synth)"
         >
           Quality
           <input type="range" id="quality" min="35" max="95" value="85" />
           <span class="slider-val" id="qualityVal">85</span>
         </label>
-      </div>
 
-      <div class="actions">
-        <button id="compareBtn" disabled title="Hold to view original (O)">
-          Original
-        </button>
-        <button
-          id="pinBtn"
-          disabled
-          title="Pin so history doesn't evict it (P)"
+        <label
+          class="check-group"
+          id="imgDqtWrap"
+          title="Also mutate JPEG Quantization Tables on uploaded image"
         >
-          Pin
-        </button>
-        <button
-          id="savePngBtn"
-          disabled
-          title="Export clean re-encoded PNG (S)"
+          <input type="checkbox" id="includeDqt" />
+          Include DQT
+        </label>
+
+        <select
+          id="patternSelect"
+          class="hidden"
+          title="Seeded procedural base pattern"
         >
-          Save PNG
-        </button>
-        <button
-          id="saveJpgBtn"
-          disabled
-          title="Download raw glitched JPEG bytes"
+          <option value="auto">Pattern: Auto</option>
+          <option value="gradient">Pattern: Gradient</option>
+          <option value="plasma">Pattern: Plasma</option>
+          <option value="stripes">Pattern: Stripes</option>
+          <option value="waves">Pattern: Waves</option>
+        </select>
+
+        <select id="sizeSelect" class="hidden" title="Output resolution">
+          <option value="1024x1024">1024 × 1024 (1:1)</option>
+          <option value="1280x720">1280 × 720 (16:9)</option>
+          <option value="720x1280">720 × 1280 (9:16)</option>
+          <option value="1080x1350">1080 × 1350 (4:5)</option>
+        </select>
+
+        <label
+          class="check-group hidden"
+          id="matchPaletteWrap"
+          title="Sample 4-color palette from your uploaded image"
         >
-          Raw JPG
-        </button>
-        <button id="glitchBtn" class="primary" disabled>Glitch (Space)</button>
+          <input type="checkbox" id="matchPalette" />
+          Match Uploaded Colors
+        </label>
       </div>
     </header>
 
@@ -339,48 +532,65 @@
       <div id="dropzone">
         <h2>Drop an image here, click to browse, or paste (Ctrl+V)</h2>
         <p>
-          PNG, JPEG, or WebP — automatically converted to baseline JPEG for
-          glitching
+          Or switch to <strong>Glitch Backgrounds</strong> to synthesize seeded
+          glitch backdrops without a source image
         </p>
+        <button id="jumpBgBtn" class="primary" type="button">
+          Try Glitch Backgrounds
+        </button>
       </div>
 
       <div id="stage">
         <div id="badge"></div>
-        <img
-          id="preview"
-          alt="Glitched preview"
-          title="Click image or press Space to generate another"
-        />
+        <div class="canvas-wrap">
+          <img
+            id="preview"
+            alt="Preview"
+            title="Click or press Space to generate next"
+          />
+          <img id="fgOverlay" alt="Foreground preview" />
+        </div>
       </div>
     </main>
 
     <footer>
       <div class="history-strip" id="historyStrip">
         <span class="history-empty"
-          >Generated images appear here (keeps last 30 + all pinned)</span
+          >History appears here (keeps last 30 + all pinned)</span
         >
       </div>
       <div class="hints">
         <span>
-          <kbd>Space</kbd> or Click Image: Glitch &nbsp;·&nbsp; <kbd>←</kbd>
+          <kbd>Space</kbd> / Click: Generate &nbsp;·&nbsp; <kbd>←</kbd>
           <kbd>→</kbd> History &nbsp;·&nbsp; Hold <kbd>O</kbd> Original
-          &nbsp;·&nbsp; <kbd>P</kbd> Pin &nbsp;·&nbsp; <kbd>S</kbd> Save PNG
+          &nbsp;·&nbsp; <kbd>F</kbd> FG Overlay &nbsp;·&nbsp; <kbd>P</kbd> Pin
+          &nbsp;·&nbsp; <kbd>S</kbd> Save PNG
         </span>
         <span id="statusText">Ready</span>
       </div>
     </footer>
 
     <script>
-      const MAX_UNPINNED_HISTORY = 30;
+      const MAX_UNPINNED = 30;
+      const ENGINE_SHORT = {
+        image: "IMG",
+        "image+dqt": "DQT",
+        "procedural-jpeg": "PROC",
+        "palette-jpeg": "PAL",
+        "algo-synth": "ALGO",
+        "dqt-hybrid": "HYB",
+      };
 
+      let mode = "image"; // 'image' | 'background'
+      let engine = "procedural-jpeg";
       let hasImage = false;
-      let isGenerating = false;
       let originalUrl = null;
+      let seedLocked = false;
+      let isGenerating = false;
       let showingOriginal = false;
+      let showFgOverlay = false;
 
-      // History: newest at index 0
-      // Item: { id, url, blob, diff, attempts, ms, pinned }
-      let history = [];
+      let history = []; // newest at index 0
       let currentIndex = -1;
 
       const $ = (id) => document.getElementById(id);
@@ -388,29 +598,92 @@
       const dropzone = $("dropzone");
       const stage = $("stage");
       const preview = $("preview");
+      const fgOverlay = $("fgOverlay");
       const badge = $("badge");
       const historyStrip = $("historyStrip");
       const statusText = $("statusText");
 
-      const mutationsEl = $("mutations");
+      const seedInput = $("seedInput");
+      const lockSeedBtn = $("lockSeedBtn");
+      const intensityEl = $("intensity");
       const maxDriftEl = $("maxDrift");
       const qualityEl = $("quality");
+      const includeDqtEl = $("includeDqt");
+      const patternSelect = $("patternSelect");
+      const sizeSelect = $("sizeSelect");
+      const matchPaletteEl = $("matchPalette");
+
+      const enginePills = $("enginePills");
+      const imgDqtWrap = $("imgDqtWrap");
+      const matchPaletteWrap = $("matchPaletteWrap");
 
       const glitchBtn = $("glitchBtn");
       const compareBtn = $("compareBtn");
+      const overlayBtn = $("overlayBtn");
       const pinBtn = $("pinBtn");
       const savePngBtn = $("savePngBtn");
       const saveJpgBtn = $("saveJpgBtn");
 
-      mutationsEl.oninput = () =>
-        ($("mutationsVal").textContent = mutationsEl.value);
-      maxDriftEl.oninput = () =>
-        ($("maxDriftVal").textContent = maxDriftEl.value);
-      qualityEl.oninput = () => ($("qualityVal").textContent = qualityEl.value);
+      function makeRandomSeed() {
+        const chars = "abcdefghjkmnpqrstuvwxyz23456789";
+        let s = "";
+        for (let i = 0; i < 8; i++) {
+          if (i === 4) s += "-";
+          s += chars[Math.floor(Math.random() * chars.length)];
+        }
+        return s;
+      }
+
+      function syncUI() {
+        const isBg = mode === "background";
+
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) =>
+            t.classList.toggle("active", t.dataset.mode === mode),
+          );
+        document
+          .querySelectorAll(".pill")
+          .forEach((p) =>
+            p.classList.toggle("active", p.dataset.engine === engine),
+          );
+
+        enginePills.classList.toggle("hidden", !isBg);
+        patternSelect.classList.toggle("hidden", !isBg);
+        sizeSelect.classList.toggle("hidden", !isBg);
+        imgDqtWrap.classList.toggle("hidden", isBg);
+        matchPaletteWrap.classList.toggle(
+          "hidden",
+          !(isBg && engine === "palette-jpeg"),
+        );
+        matchPaletteEl.disabled = !hasImage;
+
+        compareBtn.classList.toggle("hidden", isBg);
+        overlayBtn.classList.toggle("hidden", !isBg);
+        overlayBtn.disabled = !hasImage;
+        overlayBtn.classList.toggle("active-toggle", showFgOverlay);
+        fgOverlay.style.display =
+          isBg && showFgOverlay && hasImage ? "block" : "none";
+
+        const canGenerate = isBg || hasImage;
+        glitchBtn.disabled = !canGenerate;
+        compareBtn.disabled = !hasImage;
+
+        if (canGenerate && history.length > 0) {
+          dropzone.style.display = "none";
+          stage.style.display = "flex";
+        } else if (!isBg && !hasImage) {
+          dropzone.style.display = "block";
+          stage.style.display = "none";
+        }
+
+        lockSeedBtn.textContent = seedLocked ? "Locked" : "Unlock";
+        lockSeedBtn.classList.toggle("active-toggle", seedLocked);
+      }
 
       async function uploadFile(file) {
         if (!file || !file.type.startsWith("image/")) return;
-        statusText.textContent = "Preparing baseline JPEG...";
+        statusText.textContent = "Preparing baseline JPEG + overscan...";
 
         const form = new FormData();
         form.append("image", file);
@@ -423,66 +696,82 @@
         }
         const meta = await res.json();
 
-        // Clear old history on new source image
-        history.forEach((item) => URL.revokeObjectURL(item.url));
-        history = [];
-        currentIndex = -1;
         if (originalUrl) URL.revokeObjectURL(originalUrl);
-
         const origRes = await fetch("/api/original");
         originalUrl = URL.createObjectURL(await origRes.blob());
-
+        fgOverlay.src = originalUrl;
         hasImage = true;
-        dropzone.style.display = "none";
-        stage.style.display = "flex";
-        glitchBtn.disabled = false;
-        compareBtn.disabled = false;
-        statusText.textContent = `Loaded ${meta.width}×${meta.height} (${(meta.bytes / 1024).toFixed(0)} KB)`;
 
-        renderHistory();
-        generateGlitch();
+        statusText.textContent = `Loaded ${meta.width}×${meta.height} (palette extracted)`;
+        syncUI();
+        generate({ forceNewSeed: !seedLocked });
       }
 
-      async function generateGlitch() {
-        if (!hasImage || isGenerating) return;
+      async function generate({ forceNewSeed = true } = {}) {
+        if (isGenerating) return;
+        if (mode === "image" && !hasImage) return;
+
         isGenerating = true;
         const t0 = performance.now();
+
+        let seed = seedInput.value.trim();
+        if (!seed || (forceNewSeed && !seedLocked)) {
+          seed = makeRandomSeed();
+          seedInput.value = seed;
+        }
+
+        const [wStr, hStr] = sizeSelect.value.split("x");
 
         try {
           const res = await fetch("/api/glitch", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              mutations: Number(mutationsEl.value),
+              mode,
+              engine,
+              seed,
+              pattern: patternSelect.value,
+              width: Number(wStr),
+              height: Number(hStr),
+              intensity: Number(intensityEl.value),
               maxDrift: Number(maxDriftEl.value),
               quality: Number(qualityEl.value),
+              includeDqt: includeDqtEl.checked,
+              matchImagePalette: matchPaletteEl.checked && hasImage,
             }),
           });
 
-          if (!res.ok) throw new Error("Generation failed");
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.error || "Generation failed");
+          }
 
           const blob = await res.blob();
           const url = URL.createObjectURL(blob);
           const ms = Math.round(performance.now() - t0);
+          const usedSeed = res.headers.get("X-Glitch-Seed") || seed;
           const diff = res.headers.get("X-Glitch-Diff") || "?";
           const attempts = res.headers.get("X-Glitch-Attempts") || "1";
+          const usedEngine = res.headers.get("X-Glitch-Engine") || engine;
 
           history.unshift({
-            id: Date.now() + Math.random(),
             url,
             blob,
+            seed: usedSeed,
+            mode,
+            engine: usedEngine,
             diff,
             attempts,
             ms,
             pinned: false,
           });
 
-          // Evict oldest unpinned items beyond cap
-          let unpinnedCount = 0;
+          // Evict oldest unpinned beyond limit
+          let unpinned = 0;
           for (let i = 0; i < history.length; i++) {
             if (!history[i].pinned) {
-              unpinnedCount++;
-              if (unpinnedCount > MAX_UNPINNED_HISTORY) {
+              unpinned++;
+              if (unpinned > MAX_UNPINNED) {
                 const [removed] = history.splice(i, 1);
                 URL.revokeObjectURL(removed.url);
                 i--;
@@ -490,6 +779,8 @@
             }
           }
 
+          dropzone.style.display = "none";
+          stage.style.display = "flex";
           selectHistory(0);
         } catch (err) {
           statusText.textContent = err.message;
@@ -503,9 +794,12 @@
         currentIndex = idx;
         const item = history[idx];
 
+        seedInput.value = item.seed;
         if (!showingOriginal) {
           preview.src = item.url;
-          badge.innerHTML = `#${idx + 1}/${history.length} · drift <strong>${item.diff}</strong> · ${item.ms}ms (${item.attempts} try)`;
+          badge.innerHTML =
+            `#${idx + 1}/${history.length} · <strong>${item.engine}</strong> · ` +
+            `seed <strong>${item.seed}</strong> · drift ${item.diff} · ${item.ms}ms (${item.attempts} try)`;
         }
 
         pinBtn.disabled = false;
@@ -521,7 +815,7 @@
         historyStrip.innerHTML = "";
         if (history.length === 0) {
           historyStrip.innerHTML =
-            '<span class="history-empty">Generated images appear here</span>';
+            '<span class="history-empty">History appears here</span>';
           return;
         }
 
@@ -532,7 +826,8 @@
             (idx === currentIndex ? " active" : "") +
             (item.pinned ? " pinned" : "");
           div.onclick = () => selectHistory(idx);
-          div.innerHTML = `<img src="${item.url}" alt="" /><span class="pin-dot"></span>`;
+          const tag = ENGINE_SHORT[item.engine] || "GL";
+          div.innerHTML = `<img src="${item.url}" alt="" /><span class="pin-dot"></span><span class="tag">${tag}</span>`;
           historyStrip.appendChild(div);
         });
 
@@ -546,7 +841,7 @@
       }
 
       function setCompare(show) {
-        if (!hasImage || !originalUrl) return;
+        if (!hasImage || !originalUrl || mode !== "image") return;
         showingOriginal = show;
         if (show) {
           preview.src = originalUrl;
@@ -562,19 +857,19 @@
         selectHistory(currentIndex);
       }
 
-      function saveCleanPng() {
+      function savePng() {
         if (currentIndex < 0) return;
         const item = history[currentIndex];
         const img = new Image();
         img.onload = () => {
-          const canvas = document.createElement("canvas");
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          canvas.getContext("2d").drawImage(img, 0, 0);
-          canvas.toBlob((pngBlob) => {
+          const c = document.createElement("canvas");
+          c.width = img.naturalWidth;
+          c.height = img.naturalHeight;
+          c.getContext("2d").drawImage(img, 0, 0);
+          c.toBlob((pngBlob) => {
             const a = document.createElement("a");
             a.href = URL.createObjectURL(pngBlob);
-            a.download = `glitch-${Date.now()}.png`;
+            a.download = `glitch-${item.engine}-${item.seed}.png`;
             a.click();
             setTimeout(() => URL.revokeObjectURL(a.href), 1000);
           }, "image/png");
@@ -582,28 +877,93 @@
         img.src = item.url;
       }
 
-      function saveRawJpg() {
+      function saveJpg() {
         if (currentIndex < 0) return;
+        const item = history[currentIndex];
         const a = document.createElement("a");
-        a.href = history[currentIndex].url;
-        a.download = `glitch-raw-${Date.now()}.jpg`;
+        a.href = item.url;
+        a.download = `glitch-${item.engine}-${item.seed}.jpg`;
         a.click();
       }
 
-      // Event bindings
+      // Slider bindings (re-render same seed automatically when seed is locked)
+      let sliderTimer = null;
+      function onControlTweak() {
+        $("intensityVal").textContent = intensityEl.value;
+        $("maxDriftVal").textContent = maxDriftEl.value;
+        $("qualityVal").textContent = qualityEl.value;
+        if (seedLocked && (mode === "background" || hasImage)) {
+          clearTimeout(sliderTimer);
+          sliderTimer = setTimeout(
+            () => generate({ forceNewSeed: false }),
+            120,
+          );
+        }
+      }
+      intensityEl.oninput = onControlTweak;
+      maxDriftEl.oninput = onControlTweak;
+      qualityEl.oninput = onControlTweak;
+      includeDqtEl.onchange = () =>
+        seedLocked && generate({ forceNewSeed: false });
+      patternSelect.onchange = () => generate({ forceNewSeed: !seedLocked });
+      sizeSelect.onchange = () => generate({ forceNewSeed: !seedLocked });
+      matchPaletteEl.onchange = () => generate({ forceNewSeed: !seedLocked });
+
+      // Mode & Engine tabs
+      document.querySelectorAll(".tab").forEach((btn) => {
+        btn.onclick = () => {
+          mode = btn.dataset.mode;
+          syncUI();
+          if (mode === "background") generate({ forceNewSeed: !seedLocked });
+        };
+      });
+
+      document.querySelectorAll(".pill").forEach((btn) => {
+        btn.onclick = () => {
+          engine = btn.dataset.engine;
+          syncUI();
+          generate({ forceNewSeed: !seedLocked });
+        };
+      });
+
+      $("jumpBgBtn").onclick = (e) => {
+        e.stopPropagation();
+        mode = "background";
+        syncUI();
+        generate({ forceNewSeed: true });
+      };
+
+      lockSeedBtn.onclick = () => {
+        seedLocked = !seedLocked;
+        syncUI();
+      };
+
+      seedInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          seedInput.blur();
+          generate({ forceNewSeed: false });
+        }
+      });
+
+      overlayBtn.onclick = () => {
+        showFgOverlay = !showFgOverlay;
+        syncUI();
+      };
+
       fileInput.onchange = (e) => uploadFile(e.target.files[0]);
       dropzone.onclick = () => fileInput.click();
-      preview.onclick = () => generateGlitch();
-      glitchBtn.onclick = () => generateGlitch();
+      preview.onclick = () => generate({ forceNewSeed: true });
+      glitchBtn.onclick = () => generate({ forceNewSeed: true });
       pinBtn.onclick = () => togglePin();
-      savePngBtn.onclick = () => saveCleanPng();
-      saveJpgBtn.onclick = () => saveRawJpg();
+      savePngBtn.onclick = () => savePng();
+      saveJpgBtn.onclick = () => saveJpg();
 
       compareBtn.onmousedown = () => setCompare(true);
       compareBtn.onmouseup = () => setCompare(false);
       compareBtn.onmouseleave = () => showingOriginal && setCompare(false);
 
-      // Drag & Drop anywhere on window
+      // Drag & drop + clipboard paste
       window.addEventListener("dragover", (e) => {
         e.preventDefault();
         dropzone.classList.add("dragover");
@@ -616,9 +976,8 @@
         dropzone.classList.remove("dragover");
         if (e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]);
       });
-
-      // Paste image from clipboard
       window.addEventListener("paste", (e) => {
+        if (document.activeElement === seedInput) return;
         const file = [...(e.clipboardData?.files || [])].find((f) =>
           f.type.startsWith("image/"),
         );
@@ -627,9 +986,10 @@
 
       // Keyboard shortcuts
       window.addEventListener("keydown", (e) => {
+        if (document.activeElement === seedInput) return;
         if (e.code === "Space") {
           e.preventDefault();
-          generateGlitch();
+          generate({ forceNewSeed: true });
         } else if (
           e.code === "ArrowRight" &&
           currentIndex < history.length - 1
@@ -639,17 +999,21 @@
           selectHistory(currentIndex - 1);
         } else if (e.code === "KeyO" && !e.repeat) {
           setCompare(true);
+        } else if (e.code === "KeyF" && mode === "background" && hasImage) {
+          showFgOverlay = !showFgOverlay;
+          syncUI();
         } else if (e.code === "KeyP") {
           togglePin();
         } else if (e.code === "KeyS") {
           e.preventDefault();
-          saveCleanPng();
+          savePng();
         }
       });
-
       window.addEventListener("keyup", (e) => {
         if (e.code === "KeyO") setCompare(false);
       });
+
+      syncUI();
     </script>
   </body>
 </html>
