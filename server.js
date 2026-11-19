@@ -54,6 +54,11 @@ app.get('/api/original', (req, res) => {
   res.send(imageState.origJpeg);
 });
 
+app.delete('/api/upload', (req, res) => {
+  imageState = null;
+  res.json({ ok: true, cleared: true });
+});
+
 app.post('/api/glitch', async (req, res) => {
   try {
     const mode = req.body.mode === 'background' ? 'background' : 'image';

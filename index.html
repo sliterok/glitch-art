@@ -527,12 +527,13 @@
         border-radius: 3px;
       }
       .thumb .tag.src-tag {
-        background: #2563eb;
+        background: #d97706;
         color: #ffffff;
         font-weight: 700;
+        letter-spacing: 0.3px;
       }
       .thumb.is-source {
-        border-color: rgba(37, 99, 235, 0.45);
+        border-color: rgba(245, 158, 11, 0.55);
       }
 
       /* Hover Preview during Shift & Drag */
@@ -730,25 +731,35 @@
         font-size: 9px;
       }
       .grid-card .card-tag.src-tag {
-        background: #2563eb;
+        background: #d97706;
         color: #ffffff;
         font-weight: 700;
+        letter-spacing: 0.3px;
       }
       .grid-card.is-source {
-        border-color: rgba(37, 99, 235, 0.45);
+        border-color: rgba(245, 158, 11, 0.55);
       }
       .thumb.pinned-source,
       .grid-card.pinned-source {
-        border-color: #3b82f6 !important;
-        box-shadow: 0 0 0 1px #3b82f6, 0 3px 12px rgba(59, 130, 246, 0.35);
+        border-color: #f59e0b !important;
+        box-shadow: 0 0 0 1px #f59e0b, 0 4px 16px rgba(245, 158, 11, 0.35) !important;
+      }
+      .thumb.pinned-source.active,
+      .grid-card.pinned-source.active {
+        border-color: #f59e0b !important;
+        box-shadow: 0 0 0 2px #f59e0b, 0 4px 18px rgba(245, 158, 11, 0.5) !important;
       }
       .thumb .pin-badge,
       .grid-card .pin-badge {
         position: absolute;
         top: 2px;
         right: 2px;
-        font-size: 10px;
+        font-size: 11px;
         line-height: 1;
+        background: rgba(14, 16, 21, 0.85);
+        border: 1px solid rgba(245, 158, 11, 0.6);
+        border-radius: 4px;
+        padding: 1px 2px;
         filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
         z-index: 3;
       }
@@ -2473,6 +2484,9 @@
         if (ids.length === 0) return;
         const count = ids.length;
         await dbDeleteItems(ids);
+
+        const wasSourceDeleted = currentSourceRecord && ids.includes(currentSourceRecord.id);
+
         for (const id of ids) {
           const idx = history.findIndex((it) => it.id === id);
           if (idx !== -1) {
@@ -2482,16 +2496,64 @@
         }
         setSelectMode(false);
         updateTabCounts();
+
         if (history.length > 0) {
-          selectHistory(Math.min(currentIndex >= 0 ? currentIndex : 0, history.length - 1));
+          if (wasSourceDeleted) {
+            const remainingSource = history.find((it) => it.engine === "source");
+            if (remainingSource) {
+              await setActiveSourceFromRecord(remainingSource);
+            } else {
+              currentSourceRecord = null;
+              activeSourceId = null;
+              hasImage = false;
+              imageState = null;
+              if (originalUrl) {
+                URL.revokeObjectURL(originalUrl);
+                originalUrl = null;
+              }
+              if (hasServerBackend) {
+                fetch("/api/upload", { method: "DELETE" }).catch(() => {});
+              }
+            }
+          }
+          const nextIdx = Math.max(0, Math.min(currentIndex >= 0 ? currentIndex : 0, history.length - 1));
+          selectHistory(nextIdx);
         } else {
+          // ALL images were deleted: FULL COMPLETE RESET
+          history.length = 0;
           currentIndex = -1;
+          currentSourceRecord = null;
+          activeSourceId = null;
+          hasImage = false;
+          imageState = null;
+          if (originalUrl) {
+            URL.revokeObjectURL(originalUrl);
+            originalUrl = null;
+          }
+          if (hasServerBackend) {
+            fetch("/api/upload", { method: "DELETE" }).catch(() => {});
+          }
+          if (glitchWorker) {
+            callWorker("clearImage").catch(() => {});
+          }
+
+          fileInput.value = "";
+          seedInput.value = "";
+          preview.removeAttribute("src");
+          preview.src = "";
+          fgOverlay.removeAttribute("src");
+          fgOverlay.src = "";
+          badge.innerHTML = "";
           stage.style.display = "none";
           dropzone.style.display = "block";
           favoriteBtn.disabled = true;
           useSourceBtn.disabled = true;
           savePngBtn.disabled = true;
           saveJpgBtn.disabled = true;
+          compareBtn.disabled = true;
+          overlayBtn.disabled = true;
+          glitchBtn.disabled = mode !== "background";
+          syncUI();
         }
         renderHistory();
         statusText.textContent = `Deleted ${count} image(s)`;
