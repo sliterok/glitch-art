@@ -26,11 +26,13 @@ Synthesize seeded glitch backdrops from scratch without uploading an image:
 
 ### 3. Gallery, Favorites & Persistent History
 - **Persistent In-Browser History (IndexedDB)**: Generations are stored locally in your browser's IndexedDB, surviving page reloads and browser restarts.
+- **Source Images in Local Gallery (`SRC`)**: Uploaded source images and frames converted via "Use as Source" are automatically saved to your local gallery with a distinct royal blue `SRC` tag. Clicking any `SRC` item in the gallery instantly activates it as the current source for Image Glitch mode.
+- **Smart ZIP Batch Downloads**: When downloading more than 3 images, files are automatically packaged into a single clean `.zip` archive (using zero-dependency client-side PKZip Store compression) to prevent browser download clutter and prompt spam.
 - **Fullscreen Gallery Modal (G)**: Pop out the history strip into a full-screen responsive grid (`⛶ Fullscreen` or hotkey `G`, exit with `Esc`), with synchronized batch action bar and favorites filter.
 - **Desktop Range Select (Shift-Click + Hover Preview)**: Range select multiple items across the strip or grid by holding `Shift` and clicking an end item. Hovering over thumbnails while holding `Shift` provides a live dashed outline preview of the range before clicking.
 - **Marquee Box Drag Selection**: Click and drag a selection rectangle across items in either the footer strip or the fullscreen grid to effortlessly batch-select frames.
 - **Favorites Album (❤️)**: Easily bookmark frames with the `Favorite` button or `P` hotkey. Filter between **All** and **Favorites**.
-- **Batch Actions**: Multi-select mode with round checkbox badges. Batch action bar supports **Select All**, **Download (N)**, **Delete (N)**, and **Favorite (N)**.
+- **Batch Actions**: Multi-select mode with round checkbox badges. Batch action bar supports **Select All**, **Download (N) / Download ZIP (N)**, **Delete (N)**, and **Favorite (N)**.
 - **"Use as Source" Feedback Loop (U)**: One-click button to take any generated background or historic glitch frame and feed it directly into **Image Glitch** mode as the new input photo, enabling infinite recursive glitch distortion.
 - **Exponential Intensity Strategy ($e^n$)**: Intensity maps exponentially ($e^n$) rather than linearly, with the slider range automatically adapting to the image's maximum resolution (from 512px up to 2048px) so visual glitch density remains consistent across all canvas sizes.
 
