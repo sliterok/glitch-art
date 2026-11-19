@@ -555,11 +555,27 @@
           <option value="waves">Pattern: Waves</option>
         </select>
 
-        <select id="sizeSelect" class="hidden" title="Output resolution">
-          <option value="1024x1024">1024 × 1024 (1:1)</option>
-          <option value="1280x720">1280 × 720 (16:9)</option>
-          <option value="720x1280">720 × 1280 (9:16)</option>
-          <option value="1080x1350">1080 × 1350 (4:5)</option>
+        <select id="ratioSelect" class="hidden" title="Aspect Ratio">
+          <option value="1:1" selected>Ratio: 1:1 (Square)</option>
+          <option value="16:9">Ratio: 16:9 (Landscape)</option>
+          <option value="9:16">Ratio: 9:16 (Portrait / Story)</option>
+          <option value="4:5">Ratio: 4:5 (Social Portrait)</option>
+          <option value="5:4">Ratio: 5:4 (Landscape)</option>
+          <option value="4:3">Ratio: 4:3 (Standard Photo)</option>
+          <option value="3:4">Ratio: 3:4 (Portrait Photo)</option>
+          <option value="3:2">Ratio: 3:2 (Classic 35mm)</option>
+          <option value="2:3">Ratio: 2:3 (Classic Portrait)</option>
+          <option value="21:9">Ratio: 21:9 (Ultrawide)</option>
+        </select>
+
+        <select id="resSelect" class="hidden" title="Resolution (Long Edge)">
+          <option value="512">Res: 512px (Draft)</option>
+          <option value="768">Res: 768px (Small)</option>
+          <option value="1024" selected>Res: 1024px (Standard)</option>
+          <option value="1280">Res: 1280px (HD)</option>
+          <option value="1440">Res: 1440px (2K QHD)</option>
+          <option value="1920">Res: 1920px (Full HD)</option>
+          <option value="2048">Res: 2048px (Ultra)</option>
         </select>
 
         <label
@@ -663,8 +679,33 @@
       const qualityEl = $("quality");
       const includeDqtEl = $("includeDqt");
       const patternSelect = $("patternSelect");
-      const sizeSelect = $("sizeSelect");
+      const ratioSelect = $("ratioSelect");
+      const resSelect = $("resSelect");
       const matchPaletteEl = $("matchPalette");
+
+      function getBackgroundDimensions() {
+        const [rw, rh] = ratioSelect.value.split(":").map(Number);
+        const baseDim = Number(resSelect.value) || 1024;
+        let w, h;
+        if (rw >= rh) {
+          w = baseDim;
+          h = Math.round((baseDim * rh) / rw);
+        } else {
+          h = baseDim;
+          w = Math.round((baseDim * rw) / rh);
+        }
+        // Snap to multiples of 8 for optimal JPEG block compatibility
+        w = Math.max(256, Math.round(w / 8) * 8);
+        h = Math.max(256, Math.round(h / 8) * 8);
+        return { width: w, height: h };
+      }
+
+      function updateSizeTooltip() {
+        const { width, height } = getBackgroundDimensions();
+        const info = `${width} × ${height}`;
+        ratioSelect.title = `Aspect Ratio (Output: ${info})`;
+        resSelect.title = `Resolution (Output: ${info})`;
+      }
 
       const enginePills = $("enginePills");
       const imgDqtWrap = $("imgDqtWrap");
@@ -693,7 +734,9 @@
 
         enginePills.classList.toggle("hidden", !isBg);
         patternSelect.classList.toggle("hidden", !isBg);
-        sizeSelect.classList.toggle("hidden", !isBg);
+        ratioSelect.classList.toggle("hidden", !isBg);
+        resSelect.classList.toggle("hidden", !isBg);
+        if (isBg) updateSizeTooltip();
         imgDqtWrap.classList.toggle("hidden", isBg);
         matchPaletteWrap.classList.toggle(
           "hidden",
@@ -763,7 +806,7 @@
           seedInput.value = seed;
         }
 
-        const [wStr, hStr] = sizeSelect.value.split("x");
+        const { width: bgWidth, height: bgHeight } = getBackgroundDimensions();
         const intensity = Math.max(1, Math.min(30, Number(intensityEl.value) || 6));
         const maxDrift = Math.max(15, Math.min(150, Number(maxDriftEl.value) || 75));
         const quality = Math.max(30, Math.min(96, Number(qualityEl.value) || 85));
@@ -787,7 +830,8 @@
               engine,
               seed,
               pattern: patternSelect.value,
-              width: Number(wStr),
+              width: bgWidth,
+              height: bgHeight,
               height: Number(hStr),
               intensity,
               maxDrift,
@@ -958,7 +1002,14 @@
       includeDqtEl.onchange = () =>
         seedLocked && generate({ forceNewSeed: false });
       patternSelect.onchange = () => generate({ forceNewSeed: !seedLocked });
-      sizeSelect.onchange = () => generate({ forceNewSeed: !seedLocked });
+      ratioSelect.onchange = () => {
+        updateSizeTooltip();
+        generate({ forceNewSeed: !seedLocked });
+      };
+      resSelect.onchange = () => {
+        updateSizeTooltip();
+        generate({ forceNewSeed: !seedLocked });
+      };
       matchPaletteEl.onchange = () => generate({ forceNewSeed: !seedLocked });
 
       // Mode & Engine tabs
@@ -1069,3 +1120,4 @@
     </script>
   </body>
 </html>
+
