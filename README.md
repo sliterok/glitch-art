@@ -26,19 +26,25 @@ Synthesize seeded glitch backdrops from scratch without uploading an image:
 
 ### 3. Gallery, Favorites & Persistent History
 - **Persistent In-Browser History (IndexedDB)**: Generations are stored locally in your browser's IndexedDB, surviving page reloads and browser restarts.
-- **Source Images in Local Gallery (`SRC`)**: Uploaded source images and frames converted via "Use as Source" are automatically saved to your local gallery with a distinct royal blue `SRC` tag. Clicking any `SRC` item in the gallery instantly activates it as the current source for Image Glitch mode.
+- **Pinned Active Source Image & Duplication**: The active source image is pinned at position 0 (left of strip with a divider and top of the fullscreen grid) with a 📌 pin badge and `SRC` tag. The source image also remains chronologically in history with the blue `.is-source` border and tag.
+- **Dedicated Gallery Filter Tabs**: Cleanly filter between **All**, **Glitches** (filters out source images), **Sources** (only original uploaded/pasted files), and **❤️ Favs** in both the footer strip and fullscreen modal.
 - **Smart ZIP Batch Downloads**: When downloading more than 3 images, files are automatically packaged into a single clean `.zip` archive (using zero-dependency client-side PKZip Store compression) to prevent browser download clutter and prompt spam.
 - **Fullscreen Gallery Modal (G)**: Pop out the history strip into a full-screen responsive grid (`⛶ Fullscreen` or hotkey `G`, exit with `Esc`), with synchronized batch action bar and favorites filter.
 - **Desktop Range Select (Shift-Click + Hover Preview)**: Range select multiple items across the strip or grid by holding `Shift` and clicking an end item. Hovering over thumbnails while holding `Shift` provides a live dashed outline preview of the range before clicking.
 - **Marquee Box Drag Selection**: Click and drag a selection rectangle across items in either the footer strip or the fullscreen grid to effortlessly batch-select frames.
-- **Favorites Album (❤️)**: Easily bookmark frames with the `Favorite` button or `P` hotkey. Filter between **All** and **Favorites**.
+- **Favorites Album (❤️)**: Easily bookmark frames with the `Favorite` button or `P` hotkey.
 - **Batch Actions**: Multi-select mode with round checkbox badges. Batch action bar supports **Select All**, **Download (N) / Download ZIP (N)**, **Delete (N)**, and **Favorite (N)**.
-- **"Use as Source" Feedback Loop (U)**: One-click button to take any generated background or historic glitch frame and feed it directly into **Image Glitch** mode as the new input photo, enabling infinite recursive glitch distortion.
-- **Exponential Intensity Strategy ($e^n$)**: Intensity maps exponentially ($e^n$) rather than linearly, with the slider range automatically adapting to the image's maximum resolution (from 512px up to 2048px) so visual glitch density remains consistent across all canvas sizes.
+- **Non-Mutating Source Architecture**: Sourced images remain strictly the original uploaded or pasted files; generating glitches or browsing history will never mutate or re-source generated outputs.
+- **Exponential Intensity Strategy ($e^n$)**: Intensity maps exponentially ($e^n$) rather than linearly, with the slider range automatically adapting to the image's maximum resolution (up to 360 mutations, e.g. 205 at 1024px, 360 at 1920px) so visual glitch density scales realistically.
 
 ### 4. Workflow & Controls
-- **Noise vs. Random Drift Toggle**: Choose between smooth continuous 1D Perlin wave displacement (`Noise`) or jagged pseudo-random jumps (`Random`).
-- **Noise Frequency Multiplier Slider**: Fine-tune the wave frequency and ripple scale from `0.1×` to `4.0×`.
+- **4 Drift Modes**:
+  - **1D**: Continuous smooth 1D Perlin wave displacement across rows.
+  - **2D**: Smooth continuous 2D coordinate Perlin noise evaluated at each $(x, y)$ pixel coordinate.
+  - **Color**: Displacement and chroma warping driven dynamically by the $(x, y)$ pixel luminance and color chroma.
+  - **Random**: Jagged pseudo-random row jumps.
+- **Noise Frequency Multiplier Slider**: Fine-tune the wave frequency and ripple scale from `0.1×` to `4.0×` (active for 1D, 2D, and Color modes).
+- **Clipboard Image Paste (Ctrl+V)**: Paste images or screenshots directly into the application to immediately set and preview them as the active glitch source.
 - **Micro-Drift Support**: Max Drift slider lowered down to `2` with adaptive candidate acceptance thresholds for delicate scanline jitter without decoder rejection.
 - **Deterministic Seeds**: Space rolls a new seed; click **Lock** to tweak sliders (Intensity, Max Drift, Noise Mult, Quality) on the same seed in real-time.
 - **Export**: One-click download as high-resolution PNG (**S**) or baseline JPEG.
@@ -46,7 +52,7 @@ Synthesize seeded glitch backdrops from scratch without uploading an image:
   - `Space` / Click Preview: Generate next
   - `←` / `→`: Navigate history
   - Hold `O`: View original
-  - `U`: Use active frame as glitch source
+  - `Ctrl+V`: Paste image as new source
   - `P`: Toggle Favorite
   - `G`: Toggle Fullscreen History Gallery
   - `Esc`: Exit Fullscreen or cancel batch selection

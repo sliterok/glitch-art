@@ -737,6 +737,28 @@
       .grid-card.is-source {
         border-color: rgba(37, 99, 235, 0.45);
       }
+      .thumb.pinned-source,
+      .grid-card.pinned-source {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 1px #3b82f6, 0 3px 12px rgba(59, 130, 246, 0.35);
+      }
+      .thumb .pin-badge,
+      .grid-card .pin-badge {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        font-size: 10px;
+        line-height: 1;
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
+        z-index: 3;
+      }
+      .pinned-divider {
+        width: 1px;
+        background: var(--border);
+        height: 52px;
+        margin: 7px 4px;
+        flex-shrink: 0;
+      }
 
       .sm-tabs {
         padding: 1px;
@@ -840,8 +862,9 @@
         </button>
         <button
           id="useSourceBtn"
+          class="hidden"
           disabled
-          title="Use this glitched frame as the source for Image Glitch mode (U)"
+          title="Use this frame as source"
         >
           Use as Source
         </button>
@@ -868,7 +891,7 @@
       <div class="bar-row">
         <label class="slider-group" title="Intensity level (e^n mutation scaling adapted to resolution)">
           Intensity
-          <input type="range" id="intensity" min="1" max="51" value="10" />
+          <input type="range" id="intensity" min="1" max="205" value="10" />
           <span class="slider-val" id="intensityVal">10</span>
         </label>
 
@@ -884,10 +907,12 @@
         <div
           class="tabs sm-tabs"
           id="driftModeTabs"
-          title="Visual drift calculation strategy: continuous Noise waves vs pseudo-random jumps"
+          title="Visual drift calculation strategy: 1D wave noise, 2D coords noise, Color-driven noise, or pseudo-Random"
         >
-          <button class="tab active" data-drift="noise">Noise</button>
-          <button class="tab" data-drift="random">Random</button>
+          <button class="tab active" data-drift="noise" title="1D continuous wave noise across rows">1D</button>
+          <button class="tab" data-drift="2d" title="2D continuous coordinate noise at current pixel">2D</button>
+          <button class="tab" data-drift="color" title="Displacement driven by pixel color and luminance">Color</button>
+          <button class="tab" data-drift="random" title="Pseudo-random drift jumps">Random</button>
         </div>
 
         <label
@@ -1000,7 +1025,9 @@
       <div class="history-bar">
         <div class="history-tabs">
           <button class="htab active" id="tabAll">All (<span id="allCount">0</span>)</button>
-          <button class="htab" id="tabFav">❤️ Favorites (<span id="favCount">0</span>)</button>
+          <button class="htab" id="tabGlitches" title="View only generated glitches (filters out sources)">Glitches (<span id="glitchesCount">0</span>)</button>
+          <button class="htab" id="tabSources" title="View only original source images">Sources (<span id="sourcesCount">0</span>)</button>
+          <button class="htab" id="tabFav">❤️ Favs (<span id="favCount">0</span>)</button>
         </div>
 
         <div class="spacer"></div>
@@ -1027,7 +1054,7 @@
         <span>
           <kbd>Space</kbd> / Click: Generate &nbsp;·&nbsp; <kbd>←</kbd>
           <kbd>→</kbd> History &nbsp;·&nbsp; Hold <kbd>O</kbd> Original
-          &nbsp;·&nbsp; <kbd>U</kbd> Use as Source &nbsp;·&nbsp; <kbd>P</kbd> Favorite
+          &nbsp;·&nbsp; <kbd>Ctrl+V</kbd> Paste &nbsp;·&nbsp; <kbd>P</kbd> Favorite
           &nbsp;·&nbsp; <kbd>G</kbd> Fullscreen &nbsp;·&nbsp; <kbd>S</kbd> Save PNG
         </span>
         <span id="statusText">Ready</span>
@@ -1044,7 +1071,9 @@
 
         <div class="history-tabs">
           <button class="htab active" id="modalTabAll">All (<span id="modalAllCount">0</span>)</button>
-          <button class="htab" id="modalTabFav">❤️ Favorites (<span id="modalFavCount">0</span>)</button>
+          <button class="htab" id="modalTabGlitches" title="View only generated glitches (filters out sources)">Glitches (<span id="modalGlitchesCount">0</span>)</button>
+          <button class="htab" id="modalTabSources" title="View only original source images">Sources (<span id="modalSourcesCount">0</span>)</button>
+          <button class="htab" id="modalTabFav">❤️ Favs (<span id="modalFavCount">0</span>)</button>
         </div>
 
         <div class="spacer"></div>
@@ -1122,11 +1151,12 @@
 
       // Persistent History & Gallery state
       let history = []; // newest at index 0
+      let currentSourceRecord = null; // currently active source image
       let currentIndex = -1;
-      let historyFilter = "all"; // 'all' | 'favorites'
+      let historyFilter = "all"; // 'all' | 'glitches' | 'sources' | 'favorites'
       let isSelecting = false;
       const selectedIds = new Set();
-      let driftMode = "noise"; // 'noise' | 'random'
+      let driftMode = "noise"; // 'noise' | '2d' | 'color' | 'random'
       let anchorIndex = -1;
       let isShiftDown = false;
 
@@ -1170,8 +1200,12 @@
       const saveJpgBtn = $("saveJpgBtn");
 
       const tabAll = $("tabAll");
+      const tabGlitches = $("tabGlitches");
+      const tabSources = $("tabSources");
       const tabFav = $("tabFav");
       const allCount = $("allCount");
+      const glitchesCount = $("glitchesCount");
+      const sourcesCount = $("sourcesCount");
       const favCount = $("favCount");
 
       const expandHistoryBtn = $("expandHistoryBtn");
@@ -1190,8 +1224,12 @@
       const modalSubtitle = $("modalSubtitle");
       const closeModalBtn = $("closeModalBtn");
       const modalTabAll = $("modalTabAll");
+      const modalTabGlitches = $("modalTabGlitches");
+      const modalTabSources = $("modalTabSources");
       const modalTabFav = $("modalTabFav");
       const modalAllCount = $("modalAllCount");
+      const modalGlitchesCount = $("modalGlitchesCount");
+      const modalSourcesCount = $("modalSourcesCount");
       const modalFavCount = $("modalFavCount");
       const modalToggleSelectBtn = $("modalToggleSelectBtn");
       const modalSelectionActions = $("modalSelectionActions");
@@ -1256,17 +1294,35 @@
       }
 
       function getVisibleHistory() {
-        return historyFilter === "favorites" ? history.filter((it) => it.favorite) : history;
+        if (historyFilter === "glitches") {
+          return history.filter((it) => it.engine !== "source");
+        }
+        if (historyFilter === "sources") {
+          return history.filter((it) => it.engine === "source");
+        }
+        if (historyFilter === "favorites") {
+          return history.filter((it) => it.favorite);
+        }
+        return history;
       }
 
       function updateTabCounts() {
         const all = history.length;
+        const glitches = history.filter((it) => it.engine !== "source").length;
+        const sources = history.filter((it) => it.engine === "source").length;
         const favs = history.filter((it) => it.favorite).length;
+
         allCount.textContent = all;
+        glitchesCount.textContent = glitches;
+        sourcesCount.textContent = sources;
         favCount.textContent = favs;
+
         modalAllCount.textContent = all;
+        modalGlitchesCount.textContent = glitches;
+        modalSourcesCount.textContent = sources;
         modalFavCount.textContent = favs;
-        modalSubtitle.textContent = `${all} item${all === 1 ? "" : "s"}${favs > 0 ? ` (${favs} favorite${favs === 1 ? "" : "s"})` : ""}`;
+
+        modalSubtitle.textContent = `${glitches} glitch${glitches === 1 ? "" : "es"} · ${sources} source${sources === 1 ? "" : "s"}${favs > 0 ? ` · ${favs} favorite${favs === 1 ? "" : "s"}` : ""}`;
       }
 
       async function initEngine() {
@@ -1334,8 +1390,8 @@
           .forEach((t) =>
             t.classList.toggle("active", t.dataset.drift === driftMode),
           );
-        driftMultWrap.style.opacity = driftMode === "noise" ? "1" : "0.35";
-        driftMultWrap.style.pointerEvents = driftMode === "noise" ? "auto" : "none";
+        driftMultWrap.style.opacity = driftMode === "random" ? "0.35" : "1";
+        driftMultWrap.style.pointerEvents = driftMode === "random" ? "none" : "auto";
         document
           .querySelectorAll(".pill")
           .forEach((p) =>
@@ -1496,6 +1552,7 @@
               height: loadedHeight,
               createdAt: Date.now(),
             };
+            currentSourceRecord = srcRecord;
             history.unshift(srcRecord);
             await dbSaveItem(srcRecord);
             updateTabCounts();
@@ -1526,7 +1583,7 @@
         }
 
         const { width: bgWidth, height: bgHeight } = getBackgroundDimensions();
-        const intensity = Math.max(1, Math.min(120, Number(intensityEl.value) || 10));
+        const intensity = Math.max(1, Math.min(400, Number(intensityEl.value) || 10));
         const maxDrift = Math.max(2, Math.min(150, Number(maxDriftEl.value) || 65));
         const driftMultiplier = Math.max(0.1, Math.min(5.0, Number(driftMult.value) || 1.0));
         const quality = Math.max(30, Math.min(96, Number(qualityEl.value) || 85));
@@ -1704,8 +1761,11 @@
         favoriteBtn.textContent = item.favorite ? "❤️ Favorited" : "♡ Favorite";
         favoriteBtn.title = item.favorite ? "Remove from Favorites (P)" : "Add to Favorites (P)";
 
-        if (item.engine === "source" && mode === "image") {
-          setActiveSourceFromRecord(item);
+        if (item.engine === "source") {
+          currentSourceRecord = item;
+          if (mode === "image") {
+            setActiveSourceFromRecord(item);
+          }
         }
 
         renderHistory();
@@ -1782,12 +1842,49 @@
 
         // 1. Render bottom history strip
         historyStrip.innerHTML = "";
+        if (currentSourceRecord) {
+          const masterIdx = history.indexOf(currentSourceRecord);
+          const isCurActive = masterIdx >= 0 && masterIdx === currentIndex;
+          const pinThumb = document.createElement("div");
+          pinThumb.className =
+            "thumb is-source pinned-source" +
+            (isCurActive ? " active" : "") +
+            (currentSourceRecord.favorite ? " is-favorite" : "") +
+            (selectedIds.has(currentSourceRecord.id) ? " is-selected" : "");
+          pinThumb.dataset.id = currentSourceRecord.id;
+          pinThumb.title = `Active Source (${currentSourceRecord.width}×${currentSourceRecord.height}px) - Pinned`;
+          pinThumb.onclick = () => {
+            const idx = history.indexOf(currentSourceRecord);
+            if (idx >= 0) selectHistory(idx);
+          };
+          pinThumb.innerHTML = `
+            <img src="${currentSourceRecord.url}" alt="Active Source" loading="lazy" draggable="false" />
+            <span class="pin-badge" title="Pinned Active Source">📌</span>
+            <span class="fav-badge" title="Favorite">❤️</span>
+            <span class="select-check">✓</span>
+            <span class="tag src-tag">SRC</span>
+          `;
+          historyStrip.appendChild(pinThumb);
+
+          const divider = document.createElement("div");
+          divider.className = "pinned-divider";
+          divider.title = "Pinned source divider";
+          historyStrip.appendChild(divider);
+        }
+
         if (visible.length === 0) {
           const emptyMsg =
             historyFilter === "favorites"
               ? "No favorites yet. Click ♡ Favorite or press P on any generation."
+              : historyFilter === "glitches"
+              ? "No glitches generated yet. Press Space to glitch the source!"
+              : historyFilter === "sources"
+              ? "No source images uploaded yet."
               : "History appears here";
-          historyStrip.innerHTML = `<span class="history-empty">${emptyMsg}</span>`;
+          const emptySpan = document.createElement("span");
+          emptySpan.className = "history-empty";
+          emptySpan.textContent = emptyMsg;
+          historyStrip.appendChild(emptySpan);
         } else {
           visible.forEach((item, visibleIdx) => {
             const masterIdx = history.indexOf(item);
@@ -1829,12 +1926,50 @@
 
         // 2. Render fullscreen history grid
         historyGrid.innerHTML = "";
+        if (currentSourceRecord) {
+          const masterIdx = history.indexOf(currentSourceRecord);
+          const isCurActive = masterIdx >= 0 && masterIdx === currentIndex;
+          const pinCard = document.createElement("div");
+          pinCard.className =
+            "grid-card is-source pinned-source" +
+            (isCurActive ? " active" : "") +
+            (currentSourceRecord.favorite ? " is-favorite" : "") +
+            (selectedIds.has(currentSourceRecord.id) ? " is-selected" : "");
+          pinCard.dataset.id = currentSourceRecord.id;
+          pinCard.title = `Active Source (${currentSourceRecord.width}×${currentSourceRecord.height}px) - Pinned`;
+          pinCard.onclick = () => {
+            const idx = history.indexOf(currentSourceRecord);
+            if (idx >= 0) selectHistory(idx);
+          };
+          pinCard.innerHTML = `
+            <img src="${currentSourceRecord.url}" alt="Active Source" loading="lazy" draggable="false" />
+            <span class="pin-badge" title="Pinned Active Source">📌</span>
+            <span class="fav-badge" title="Favorite">❤️</span>
+            <span class="select-check">✓</span>
+            <div class="card-info">
+              <span class="card-tag src-tag">SRC 📌</span>
+              <span>source</span>
+            </div>
+          `;
+          historyGrid.appendChild(pinCard);
+        }
+
         if (visible.length === 0) {
           const emptyMsg =
             historyFilter === "favorites"
               ? "No favorites yet. Mark favorites with ❤️ in the gallery or press P."
+              : historyFilter === "glitches"
+              ? "No glitches generated yet. Synthesize some glitches to populate!"
+              : historyFilter === "sources"
+              ? "No source images uploaded yet."
               : "No history items yet. Synthesize some glitches to populate!";
-          historyGrid.innerHTML = `<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--muted);">${emptyMsg}</div>`;
+          const emptyDiv = document.createElement("div");
+          emptyDiv.style.gridColumn = "1 / -1";
+          emptyDiv.style.padding = "40px";
+          emptyDiv.style.textAlign = "center";
+          emptyDiv.style.color = "var(--muted)";
+          emptyDiv.textContent = emptyMsg;
+          historyGrid.appendChild(emptyDiv);
         } else {
           visible.forEach((item, visibleIdx) => {
             const masterIdx = history.indexOf(item);
@@ -1937,8 +2072,12 @@
       function setHistoryFilter(filter) {
         historyFilter = filter;
         tabAll.classList.toggle("active", filter === "all");
+        tabGlitches.classList.toggle("active", filter === "glitches");
+        tabSources.classList.toggle("active", filter === "sources");
         tabFav.classList.toggle("active", filter === "favorites");
         modalTabAll.classList.toggle("active", filter === "all");
+        modalTabGlitches.classList.toggle("active", filter === "glitches");
+        modalTabSources.classList.toggle("active", filter === "sources");
         modalTabFav.classList.toggle("active", filter === "favorites");
         renderHistory();
       }
@@ -2119,8 +2258,11 @@
               stage.style.display = "flex";
               selectHistory(0);
               const latestSource = history.find((it) => it.engine === "source");
-              if (latestSource && !hasImage) {
-                setActiveSourceFromRecord(latestSource);
+              if (latestSource) {
+                currentSourceRecord = latestSource;
+                if (!hasImage) {
+                  setActiveSourceFromRecord(latestSource);
+                }
               }
             }
             dbTrimUnfavorited(60);
@@ -2177,8 +2319,8 @@
         btn.onclick = () => {
           driftMode = btn.dataset.drift;
           driftModeTabs.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t === btn));
-          driftMultWrap.style.opacity = driftMode === "noise" ? "1" : "0.35";
-          driftMultWrap.style.pointerEvents = driftMode === "noise" ? "auto" : "none";
+          driftMultWrap.style.opacity = driftMode === "random" ? "0.35" : "1";
+          driftMultWrap.style.pointerEvents = driftMode === "random" ? "none" : "auto";
           if (seedLocked && (mode === "background" || hasImage)) {
             generate({ forceNewSeed: false });
           }
@@ -2233,8 +2375,12 @@
 
       // Gallery filter tabs
       tabAll.onclick = () => setHistoryFilter("all");
+      tabGlitches.onclick = () => setHistoryFilter("glitches");
+      tabSources.onclick = () => setHistoryFilter("sources");
       tabFav.onclick = () => setHistoryFilter("favorites");
       modalTabAll.onclick = () => setHistoryFilter("all");
+      modalTabGlitches.onclick = () => setHistoryFilter("glitches");
+      modalTabSources.onclick = () => setHistoryFilter("sources");
       modalTabFav.onclick = () => setHistoryFilter("favorites");
 
       // Gallery Batch Selection Handlers
@@ -2379,10 +2525,26 @@
       });
       window.addEventListener("paste", (e) => {
         if (document.activeElement === seedInput) return;
-        const file = [...(e.clipboardData?.files || [])].find((f) =>
-          f.type.startsWith("image/"),
-        );
-        if (file) uploadFile(file);
+        let imageFile = null;
+        if (e.clipboardData?.items) {
+          for (const item of e.clipboardData.items) {
+            if (item.type && item.type.startsWith("image/")) {
+              imageFile = item.getAsFile();
+              if (imageFile) break;
+            }
+          }
+        }
+        if (!imageFile && e.clipboardData?.files) {
+          imageFile = [...e.clipboardData.files].find((f) =>
+            f.type && f.type.startsWith("image/")
+          );
+        }
+        if (imageFile) {
+          e.preventDefault();
+          mode = "image";
+          syncUI();
+          uploadFile(imageFile, true);
+        }
       });
 
       // Shift key detection for range selection preview
@@ -2421,8 +2583,6 @@
           syncUI();
         } else if (e.code === "KeyP") {
           toggleFavorite();
-        } else if (e.code === "KeyU") {
-          useAsSource();
         } else if (e.code === "KeyG") {
           if (historyModal.classList.contains("hidden")) {
             openFullscreenHistory();
