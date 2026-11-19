@@ -69,6 +69,10 @@ app.post('/api/glitch', async (req, res) => {
 
     const intensity = Math.max(1, Math.min(400, Number(req.body.intensity) || 8));
     const maxDrift = Math.max(2, Math.min(150, Number(req.body.maxDrift) || 65));
+    const corruption = req.body.corruption !== undefined
+      ? Math.max(0, Math.min(100, Number(req.body.corruption) || 0))
+      : Math.max(0, Math.min(100, Math.round((maxDrift / 140) * 80)));
+    const autoBalance = req.body.autoBalance !== undefined ? Boolean(req.body.autoBalance) : true;
     const quality = Math.max(30, Math.min(96, Number(req.body.quality) || 85));
     const allowedDriftModes = ['noise', '2d', 'color', 'random'];
     const driftMode = allowedDriftModes.includes(req.body.driftMode) ? req.body.driftMode : 'noise';
@@ -87,6 +91,8 @@ app.post('/api/glitch', async (req, res) => {
       }
       result = await glitchUploadedImage(imageState, {
         seed,
+        corruption,
+        autoBalance,
         intensity,
         maxDrift,
         includeDqt: Boolean(req.body.includeDqt),
@@ -100,6 +106,8 @@ app.post('/api/glitch', async (req, res) => {
         pattern: req.body.pattern || 'auto',
         width: req.body.width || 1024,
         height: req.body.height || 1024,
+        corruption,
+        autoBalance,
         intensity,
         maxDrift,
         quality,

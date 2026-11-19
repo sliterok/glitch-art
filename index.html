@@ -899,20 +899,29 @@
 
       <!-- Row 2: Sliders & Mode-specific options -->
       <div class="bar-row">
-        <label class="slider-group" title="Intensity level (e^n mutation scaling adapted to resolution)">
-          Intensity
-          <input type="range" id="intensity" min="1" max="205" value="10" />
-          <span class="slider-val" id="intensityVal">10</span>
+        <label
+          class="slider-group"
+          id="corruptionWrap"
+          title="Corruption level (0–100): 0–25 Clean Bands (1-bit), 26–55 Readable Glitch (1–2 bit), 56–80 Heavy Decay (nibbles), 81–100 Full Meltdown (byte + DQT)"
+        >
+          Corruption
+          <input type="range" id="corruption" min="0" max="100" value="30" />
+          <span class="slider-val" id="corruptionVal">30</span>
         </label>
 
         <label
-          class="slider-group"
-          title="Maximum allowed visual drift (difference) from base"
+          class="check-group"
+          id="autoBalanceWrap"
+          title="Controlled Error Cancellation: actively picks cancelling DC mutations to balance brightness drift and keep lineart and text readable"
         >
-          Max Drift
-          <input type="range" id="maxDrift" min="2" max="140" value="65" />
-          <span class="slider-val" id="maxDriftVal">65</span>
+          <input type="checkbox" id="autoBalance" checked />
+          Auto-Balance
         </label>
+
+        <input type="hidden" id="intensity" value="10" />
+        <span class="slider-val hidden" id="intensityVal">10</span>
+        <input type="hidden" id="maxDrift" value="65" />
+        <span class="slider-val hidden" id="maxDriftVal">65</span>
 
         <div
           class="tabs sm-tabs"
@@ -1182,6 +1191,9 @@
 
       const seedInput = $("seedInput");
       const lockSeedBtn = $("lockSeedBtn");
+      const corruptionEl = $("corruption");
+      const corruptionVal = $("corruptionVal");
+      const autoBalanceEl = $("autoBalance");
       const intensityEl = $("intensity");
       const intensityVal = $("intensityVal");
       const maxDriftEl = $("maxDrift");
@@ -1280,6 +1292,21 @@
           return Math.max(width, height);
         }
         return imageState ? Math.max(imageState.width, imageState.height) : 1024;
+      }
+
+      function getCorruptionLabel(val) {
+        if (val <= 25) return "Clean Bands";
+        if (val <= 55) return "Readable";
+        if (val <= 80) return "Heavy Decay";
+        return "Meltdown";
+      }
+
+      function updateCorruptionDisplay() {
+        if (!corruptionEl || !corruptionVal) return;
+        const val = Number(corruptionEl.value) || 0;
+        const label = getCorruptionLabel(val);
+        corruptionVal.textContent = val;
+        corruptionVal.title = `${val} - ${label} (${val <= 25 ? "1-bit flips" : val <= 55 ? "1-2 bit flips" : val <= 80 ? "Nibble edits" : "Full byte edits"})`;
       }
 
       function updateIntensityRange() {
@@ -1413,6 +1440,7 @@
         ratioSelect.classList.toggle("hidden", !isBg);
         resSelect.classList.toggle("hidden", !isBg);
         if (isBg) updateSizeTooltip();
+        updateCorruptionDisplay();
         updateIntensityRange();
         imgDqtWrap.classList.toggle("hidden", isBg);
         matchPaletteWrap.classList.toggle(
@@ -1477,6 +1505,7 @@
             fgOverlay.src = originalUrl;
             hasImage = true;
           }
+          updateCorruptionDisplay();
           updateIntensityRange();
           syncUI();
           renderHistory();
@@ -1574,6 +1603,7 @@
             renderHistory();
           }
 
+          updateCorruptionDisplay();
           updateIntensityRange();
           syncUI();
           generate({ forceNewSeed: !seedLocked });
@@ -1603,6 +1633,8 @@
         }
 
         const { width: bgWidth, height: bgHeight } = getBackgroundDimensions();
+        const corruption = corruptionEl ? Math.max(0, Math.min(100, Number(corruptionEl.value) || 30)) : 30;
+        const autoBalance = autoBalanceEl ? autoBalanceEl.checked : true;
         const intensity = Math.max(1, Math.min(400, Number(intensityEl.value) || 10));
         const maxDrift = Math.max(2, Math.min(150, Number(maxDriftEl.value) || 65));
         const driftMultiplier = Math.max(0.1, Math.min(5.0, Number(driftMult.value) || 1.0));
@@ -1622,6 +1654,8 @@
                 pattern: patternSelect.value,
                 width: bgWidth,
                 height: bgHeight,
+                corruption,
+                autoBalance,
                 intensity,
                 maxDrift,
                 quality,
@@ -1649,6 +1683,8 @@
                 quality,
                 opts: {
                   seed,
+                  corruption,
+                  autoBalance,
                   intensity,
                   maxDrift,
                   includeDqt: includeDqtEl.checked,
@@ -1664,6 +1700,8 @@
                   pattern: patternSelect.value,
                   width: bgWidth,
                   height: bgHeight,
+                  corruption,
+                  autoBalance,
                   intensity,
                   maxDrift,
                   quality,
@@ -1688,6 +1726,8 @@
               }
               result = await glitchUploadedImage(imageState, {
                 seed,
+                corruption,
+                autoBalance,
                 intensity,
                 maxDrift,
                 includeDqt: includeDqtEl.checked,
@@ -1701,6 +1741,8 @@
                 pattern: patternSelect.value,
                 width: bgWidth,
                 height: bgHeight,
+                corruption,
+                autoBalance,
                 intensity,
                 maxDrift,
                 quality,
@@ -1728,6 +1770,8 @@
             engine: usedEngine,
             diff,
             attempts,
+            corruption,
+            autoBalance,
             ms,
             favorite: false,
             width: mode === "background" ? bgWidth : (imageState?.width || 1024),
@@ -1763,6 +1807,13 @@
         const item = history[idx];
 
         seedInput.value = item.seed === "source" ? "" : item.seed;
+        if (corruptionEl && item.corruption !== undefined) {
+          corruptionEl.value = item.corruption;
+          updateCorruptionDisplay();
+        }
+        if (autoBalanceEl && item.autoBalance !== undefined) {
+          autoBalanceEl.checked = item.autoBalance;
+        }
         if (!showingOriginal) {
           preview.src = item.url;
           if (item.engine === "source") {
@@ -1770,9 +1821,10 @@
               `#${idx + 1}/${history.length} · <strong>SOURCE IMAGE</strong> · ` +
               `${item.width}×${item.height}px · Original`;
           } else {
+            const corrStr = item.corruption !== undefined ? ` · corr <strong>${item.corruption}</strong>` : "";
             badge.innerHTML =
               `#${idx + 1}/${history.length} · <strong>${item.engine}</strong> · ` +
-              `seed <strong>${item.seed}</strong> · drift ${item.diff} · ${item.ms}ms (${item.attempts} try)`;
+              `seed <strong>${item.seed}</strong>${corrStr} · drift ${item.diff} · ${item.ms}ms (${item.attempts} try)`;
           }
         }
 
@@ -2295,6 +2347,7 @@
       // Slider bindings (re-render same seed automatically when seed is locked)
       let sliderTimer = null;
       function onControlTweak() {
+        updateCorruptionDisplay();
         updateIntensityDisplay();
         maxDriftVal.textContent = maxDriftEl.value;
         driftMultVal.textContent = `${Number(driftMult.value).toFixed(1)}×`;
@@ -2307,6 +2360,14 @@
           );
         }
       }
+      if (corruptionEl) corruptionEl.oninput = onControlTweak;
+      if (autoBalanceEl) {
+        autoBalanceEl.onchange = () => {
+          if (seedLocked && (mode === "background" || hasImage)) {
+            generate({ forceNewSeed: false });
+          }
+        };
+      }
       intensityEl.oninput = onControlTweak;
       maxDriftEl.oninput = onControlTweak;
       driftMult.oninput = onControlTweak;
@@ -2316,11 +2377,13 @@
       patternSelect.onchange = () => generate({ forceNewSeed: !seedLocked });
       ratioSelect.onchange = () => {
         updateSizeTooltip();
+        updateCorruptionDisplay();
         updateIntensityRange();
         generate({ forceNewSeed: !seedLocked });
       };
       resSelect.onchange = () => {
         updateSizeTooltip();
+        updateCorruptionDisplay();
         updateIntensityRange();
         generate({ forceNewSeed: !seedLocked });
       };
@@ -2677,6 +2740,7 @@
         if (e.code === "KeyO") setCompare(false);
       });
 
+      updateCorruptionDisplay();
       updateIntensityRange();
       syncUI();
       initEngine();
