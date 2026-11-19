@@ -24,16 +24,23 @@ Synthesize seeded glitch backdrops from scratch without uploading an image:
 - **FG Overlay (F)**: Preview your uploaded subject centered over the generated background.
 - **Match Uploaded Colors**: Extract a 4-color palette from your photo to color-match the synthesized background.
 
-### 3. Workflow & Controls
+### 3. Gallery, Favorites & Persistent History
+- **Persistent In-Browser History (IndexedDB)**: Generations are stored locally in your browser's IndexedDB, surviving page reloads and browser restarts.
+- **Favorites Album (❤️)**: Easily bookmark frames with the `Favorite` button or `P` hotkey. Filter your history strip between **All** and **Favorites**.
+- **iPhone-Style Multi-Select**: Tap **Select** to enter multi-select mode with round checkbox badges. Batch action bar supports **Select All**, **Download (N)**, **Delete (N)**, and **Favorite (N)**.
+- **"Use as Source" Feedback Loop (U)**: One-click button to take any generated background or historic glitch frame and feed it directly into **Image Glitch** mode as the new input photo, enabling infinite recursive glitch distortion.
+- **Exponential Intensity Strategy ($e^n$)**: Intensity maps exponentially ($e^n$) rather than linearly, with the slider range automatically adapting to the image's maximum resolution (from 512px up to 2048px) so visual glitch density remains consistent across all canvas sizes.
+
+### 4. Workflow & Controls
 - **Deterministic Seeds**: Space rolls a new seed; click **Lock** to tweak sliders (Intensity, Max Drift, Quality) on the same seed.
-- **History Strip**: Keeps your last 30 renders plus all pinned favorites (**P**).
 - **Export**: One-click download as high-resolution PNG (**S**) or baseline JPEG.
 - **Keyboard Shortcuts**:
   - `Space` / Click Preview: Generate next
   - `←` / `→`: Navigate history
   - Hold `O`: View original
+  - `U`: Use active frame as glitch source
+  - `P`: Toggle Favorite
   - `F`: Toggle FG overlay
-  - `P`: Pin/unpin current frame
   - `S`: Save PNG
 
 ---
